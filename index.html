@@ -1,114 +1,168 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Pikachu - Nối các ô hình Pikachu</title>
+    <title>Pikachu Connect</title>
     <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
-<body class="bg-green-400 text-white">
-    <div class="container mx-auto p-4 mt-4">
-        <h1 class="text-3xl font-bold mb-4">Game Pikachu - Nối các ô hình Pikachu</h1>
-        <canvas id="game-canvas" width="400" height="400"></canvas>
-        <div class="flex justify-center mt-4">
-            <button id="new-game-button" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded">Làm mới</button>
-        </div>
-        <div class="flex justify-center mt-4">
-            <p id="score-text" class="text-lg font-bold">Điểm: 0</p>
+<body class="bg-black text-white">
+    <div class="flex justify-center items-center h-screen">
+        <div class="bg-yellow-500 p-4 rounded-md shadow-md">
+            <h1 class="text-3xl font-bold mb-4">Pikachu Connect</h1>
+            <div class="flex justify-between items-center mb-4">
+                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="easy-button">Dễ</button>
+                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="medium-button">Trung bình</button>
+                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="hard-button">Khó</button>
+            </div>
+            <canvas id="game-canvas" class="w-full h-screen"></canvas>
+            <div class="flex justify-between items-center mt-4">
+                <p class="text-lg font-bold">Điểm số: <span id="score">0</span></p>
+                <p class="text-lg font-bold">Chế độ chơi: <span id="mode">Dễ</span></p>
+            </div>
         </div>
     </div>
-
     <script>
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
-        const newGameButton = document.getElementById('new-game-button');
-        const scoreText = document.getElementById('score-text');
-
-        let grid = [];
-        let selectedCell = null;
+        const easyButton = document.getElementById('easy-button');
+        const mediumButton = document.getElementById('medium-button');
+        const hardButton = document.getElementById('hard-button');
+        const scoreElement = document.getElementById('score');
+        const modeElement = document.getElementById('mode');
         let score = 0;
+        let mode = 'easy';
+        let level = 5;
+        let pikachu = [];
+        let pairs = [];
+        let selected = null;
+        let dragging = false;
 
-        // Tạo lưới ô hình Pikachu
-        for (let i = 0; i < 6; i++) {
-            grid[i] = [];
-            for (let j = 0; j < 6; j++) {
-                grid[i][j] = {
-                    x: j * 60 + 20,
-                    y: i * 60 + 20,
-                    width: 40,
-                    height: 40,
-                    type: Math.random() < 0.2 ? 'pikachu' : 'empty'
-                };
-            }
-        }
+        easyButton.addEventListener('click', () => {
+            mode = 'easy';
+            level = 5;
+            score = 0;
+            modeElement.textContent = 'Dễ';
+            scoreElement.textContent = '0';
+            resetGame();
+        });
 
-        // Vẽ lưới ô hình Pikachu
-        function drawGrid() {
+        mediumButton.addEventListener('click', () => {
+            mode = 'medium';
+            level = 10;
+            score = 0;
+            modeElement.textContent = 'Trung bình';
+            scoreElement.textContent = '0';
+            resetGame();
+        });
+
+        hardButton.addEventListener('click', () => {
+            mode = 'hard';
+            level = 15;
+            score = 0;
+            modeElement.textContent = 'Khó';
+            scoreElement.textContent = '0';
+            resetGame();
+        });
+
+        function resetGame() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < 6; i++) {
-                for (let j = 0; j < 6; j++) {
-                    const cell = grid[i][j];
-                    if (cell.type === 'pikachu') {
-                        ctx.fillStyle = 'yellow';
-                        ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
-                        ctx.fillStyle = 'black';
-                        ctx.font = '16px Outfit';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('P', cell.x + cell.width / 2, cell.y + cell.height / 2);
-                    } else {
-                        ctx.fillStyle = 'white';
-                        ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
-                    }
-                }
+            pikachu = [];
+            pairs = [];
+            selected = null;
+            dragging = false;
+            for (let i = 0; i < level; i++) {
+                pikachu.push({
+                    x: Math.random() * (canvas.width - 100),
+                    y: Math.random() * (canvas.height - 100),
+                    color: Math.random() < 0.5 ? 'yellow' : 'black',
+                    pair: Math.floor(Math.random() * level),
+                });
+                pairs.push({
+                    first: null,
+                    second: null,
+                });
+            }
+            ctx.font = '24px Outfit';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i < level; i++) {
+                ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
+                ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
             }
         }
 
-        // Xử lý click
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            for (let i = 0; i < 6; i++) {
-                for (let j = 0; j < 6; j++) {
-                    const cell = grid[i][j];
-                    if (x >= cell.x && x <= cell.x + cell.width && y >= cell.y && y <= cell.y + cell.height) {
-                        if (selectedCell === null) {
-                            selectedCell = cell;
+            if (selected === null) {
+                for (let i = 0; i < level; i++) {
+                    if (ctx.isPointInPath(ctx.getImageData(pikachu[i].x, pikachu[i].y, 1, 1).data, pikachu[i].x, pikachu[i].y)) {
+                        selected = i;
+                        break;
+                    }
+                }
+            } else {
+                for (let i = 0; i < level; i++) {
+                    if (ctx.isPointInPath(ctx.getImageData(pikachu[i].x, pikachu[i].y, 1, 1).data, pikachu[i].x, pikachu[i].y)) {
+                        if (pikachu[i].pair === selected && pairs[selected].first === null) {
+                            pairs[selected].first = i;
+                            pairs[selected].second = null;
+                            score += 1;
+                            scoreElement.textContent = score;
+                        } else if (pikachu[i].pair === selected && pairs[selected].second === null) {
+                            pairs[selected].second = i;
+                            pairs[selected].first = null;
+                            score += 1;
+                            scoreElement.textContent = score;
                         } else {
-                            const otherCell = grid[Math.floor(selectedCell.y / 60)][Math.floor(selectedCell.x / 60)];
-                            if (cell.type === 'pikachu' && otherCell.type === 'pikachu') {
-                                score++;
-                                scoreText.textContent = `Điểm: ${score}`;
-                                selectedCell.type = 'empty';
-                                otherCell.type = 'empty';
-                            }
-                            selectedCell = null;
+                            score -= 1;
+                            scoreElement.textContent = score;
                         }
-                        drawGrid();
+                        selected = null;
                         break;
                     }
                 }
             }
-        });
-
-        // Xử lý nút làm mới
-        newGameButton.addEventListener('click', () => {
-            score = 0;
-            scoreText.textContent = `Điểm: ${score}`;
-            selectedCell = null;
-            for (let i = 0; i < 6; i++) {
-                for (let j = 0; j < 6; j++) {
-                    grid[i][j].type = Math.random() < 0.2 ? 'pikachu' : 'empty';
-                }
+            if (selected !== null) {
+                ctx.fillStyle = pikachu[selected].color === 'yellow' ? 'yellow' : 'black';
+                ctx.fillText('Pikachu', pikachu[selected].x, pikachu[selected].y);
             }
-            drawGrid();
         });
 
-        // Vẽ lưới ô hình Pikachu lần đầu
-        drawGrid();
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (selected !== null) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < level; i++) {
+                    ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
+                    ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
+                }
+                ctx.fillStyle = pikachu[selected].color === 'yellow' ? 'yellow' : 'black';
+                ctx.fillText('Pikachu', x, y);
+                dragging = true;
+            }
+        });
+
+        canvas.addEventListener('mouseout', () => {
+            if (dragging) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < level; i++) {
+                    ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
+                    ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
+                }
+                dragging = false;
+            }
+        });
+
+        resetGame();
     </script>
 </body>
 </html>
