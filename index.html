@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Pikachu - Nối các ô hình Pikachu</title>
+    <script src='https://cdn.tailwindcss.com'></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css">
+</head>
+<body class="bg-green-400 text-white">
+    <div class="container mx-auto p-4 mt-4">
+        <h1 class="text-3xl font-bold mb-4">Game Pikachu - Nối các ô hình Pikachu</h1>
+        <canvas id="game-canvas" width="400" height="400"></canvas>
+        <div class="flex justify-center mt-4">
+            <button id="new-game-button" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded">Làm mới</button>
+        </div>
+        <div class="flex justify-center mt-4">
+            <p id="score-text" class="text-lg font-bold">Điểm: 0</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const newGameButton = document.getElementById('new-game-button');
+        const scoreText = document.getElementById('score-text');
+
+        let grid = [];
+        let selectedCell = null;
+        let score = 0;
+
+        // Tạo lưới ô hình Pikachu
+        for (let i = 0; i < 6; i++) {
+            grid[i] = [];
+            for (let j = 0; j < 6; j++) {
+                grid[i][j] = {
+                    x: j * 60 + 20,
+                    y: i * 60 + 20,
+                    width: 40,
+                    height: 40,
+                    type: Math.random() < 0.2 ? 'pikachu' : 'empty'
+                };
+            }
+        }
+
+        // Vẽ lưới ô hình Pikachu
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 6; j++) {
+                    const cell = grid[i][j];
+                    if (cell.type === 'pikachu') {
+                        ctx.fillStyle = 'yellow';
+                        ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+                        ctx.fillStyle = 'black';
+                        ctx.font = '16px Outfit';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('P', cell.x + cell.width / 2, cell.y + cell.height / 2);
+                    } else {
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(cell.x, cell.y, cell.width, cell.height);
+                    }
+                }
+            }
+        }
+
+        // Xử lý click
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 6; j++) {
+                    const cell = grid[i][j];
+                    if (x >= cell.x && x <= cell.x + cell.width && y >= cell.y && y <= cell.y + cell.height) {
+                        if (selectedCell === null) {
+                            selectedCell = cell;
+                        } else {
+                            const otherCell = grid[Math.floor(selectedCell.y / 60)][Math.floor(selectedCell.x / 60)];
+                            if (cell.type === 'pikachu' && otherCell.type === 'pikachu') {
+                                score++;
+                                scoreText.textContent = `Điểm: ${score}`;
+                                selectedCell.type = 'empty';
+                                otherCell.type = 'empty';
+                            }
+                            selectedCell = null;
+                        }
+                        drawGrid();
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Xử lý nút làm mới
+        newGameButton.addEventListener('click', () => {
+            score = 0;
+            scoreText.textContent = `Điểm: ${score}`;
+            selectedCell = null;
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 6; j++) {
+                    grid[i][j].type = Math.random() < 0.2 ? 'pikachu' : 'empty';
+                }
+            }
+            drawGrid();
+        });
+
+        // Vẽ lưới ô hình Pikachu lần đầu
+        drawGrid();
+    </script>
+</body>
+</html>
