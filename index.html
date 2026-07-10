@@ -7,162 +7,260 @@
     <script src='https://cdn.tailwindcss.com'></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .tile {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background-color: #fcd34d; /* yellow-300 */
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .tile:hover {
+            transform: scale(1.05);
+            background-color: #fde047; /* yellow-400 */
+        }
+        .tile.selected {
+            border: 4px solid #ef4444; /* red-500 */
+            transform: scale(1.1);
+            background-color: #fef08a; /* yellow-200 */
+            z-index: 10;
+        }
+        .tile.empty {
+            visibility: hidden;
+        }
+    </style>
 </head>
-<body class="bg-black text-white">
-    <div class="flex justify-center items-center h-screen">
-        <div class="bg-yellow-500 p-4 rounded-md shadow-md">
-            <h1 class="text-3xl font-bold mb-4">Pikachu Connect</h1>
-            <div class="flex justify-between items-center mb-4">
-                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="easy-button">Dễ</button>
-                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="medium-button">Trung bình</button>
-                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="hard-button">Khó</button>
-            </div>
-            <canvas id="game-canvas" class="w-full h-screen"></canvas>
-            <div class="flex justify-between items-center mt-4">
-                <p class="text-lg font-bold">Điểm số: <span id="score">0</span></p>
-                <p class="text-lg font-bold">Chế độ chơi: <span id="mode">Dễ</span></p>
-            </div>
-        </div>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center py-8">
+    <h1 class="text-4xl font-bold text-yellow-400 mb-6 drop-shadow-md">Pikachu Connect</h1>
+
+    <div class="flex gap-4 mb-6">
+        <button id="easy-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded shadow">Dễ</button>
+        <button id="medium-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded shadow">Trung bình</button>
+        <button id="hard-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded shadow">Khó</button>
     </div>
+
+    <div class="flex justify-between w-full max-w-2xl px-4 mb-4">
+        <div class="text-xl font-semibold">Chế độ: <span id="mode-display" class="text-yellow-400">Dễ</span></div>
+        <div class="text-xl font-semibold">Điểm: <span id="score-display" class="text-yellow-400">0</span></div>
+    </div>
+
+    <!-- The game board container -->
+    <div class="bg-gray-800 p-2 rounded-xl shadow-2xl overflow-auto max-w-[95vw] max-h-[70vh]">
+        <div id="game-board" class="grid gap-1"></div>
+    </div>
+
     <script>
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        const easyButton = document.getElementById('easy-button');
-        const mediumButton = document.getElementById('medium-button');
-        const hardButton = document.getElementById('hard-button');
-        const scoreElement = document.getElementById('score');
-        const modeElement = document.getElementById('mode');
+        const emojis = ["🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐐", "🐵", "🐔", "🐶", "🐷", "🐸", "🐹", "🐺", "🐻", "🐼", "🐨"];
+        let grid = [];
+        let rows = 0;
+        let cols = 0;
         let score = 0;
-        let mode = 'easy';
-        let level = 5;
-        let pikachu = [];
-        let pairs = [];
-        let selected = null;
-        let dragging = false;
+        let totalPairs = 0;
+        let selectedTile = null;
 
-        easyButton.addEventListener('click', () => {
-            mode = 'easy';
-            level = 5;
+        const boardElement = document.getElementById('game-board');
+        const scoreDisplay = document.getElementById('score-display');
+        const modeDisplay = document.getElementById('mode-display');
+
+        function initGame(r, c, modeName) {
+            rows = r + 2; // +2 for empty border
+            cols = c + 2;
             score = 0;
-            modeElement.textContent = 'Dễ';
-            scoreElement.textContent = '0';
-            resetGame();
-        });
+            scoreDisplay.textContent = score;
+            modeDisplay.textContent = modeName;
+            selectedTile = null;
 
-        mediumButton.addEventListener('click', () => {
-            mode = 'medium';
-            level = 10;
-            score = 0;
-            modeElement.textContent = 'Trung bình';
-            scoreElement.textContent = '0';
-            resetGame();
-        });
+            // Calculate total pairs needed
+            totalPairs = (r * c) / 2;
 
-        hardButton.addEventListener('click', () => {
-            mode = 'hard';
-            level = 15;
-            score = 0;
-            modeElement.textContent = 'Khó';
-            scoreElement.textContent = '0';
-            resetGame();
-        });
-
-        function resetGame() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            pikachu = [];
-            pairs = [];
-            selected = null;
-            dragging = false;
-            for (let i = 0; i < level; i++) {
-                pikachu.push({
-                    x: Math.random() * (canvas.width - 100),
-                    y: Math.random() * (canvas.height - 100),
-                    color: Math.random() < 0.5 ? 'yellow' : 'black',
-                    pair: Math.floor(Math.random() * level),
-                });
-                pairs.push({
-                    first: null,
-                    second: null,
-                });
+            // Create array of pairs
+            let items = [];
+            const emojisToUse = emojis.slice(0, Math.min(emojis.length, Math.ceil(totalPairs / 2)));
+            for (let i = 0; i < totalPairs; i++) {
+                const emoji = emojisToUse[i % emojisToUse.length];
+                items.push(emoji);
+                items.push(emoji);
             }
-            ctx.font = '24px Outfit';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            for (let i = 0; i < level; i++) {
-                ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
-                ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
+
+            // Shuffle items
+            for (let i = items.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [items[i], items[j]] = [items[j], items[i]];
+            }
+
+            // Build grid
+            grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+            let itemIndex = 0;
+            for (let i = 1; i < rows - 1; i++) {
+                for (let j = 1; j < cols - 1; j++) {
+                    grid[i][j] = items[itemIndex++];
+                }
+            }
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${cols}, 3.5rem)`;
+            boardElement.style.gridTemplateRows = `repeat(${rows}, 3.5rem)`;
+
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+
+                    if (grid[i][j] === 0) {
+                        tile.classList.add('empty');
+                    } else {
+                        tile.textContent = grid[i][j];
+                        tile.dataset.row = i;
+                        tile.dataset.col = j;
+                        tile.addEventListener('click', () => handleTileClick(tile, i, j));
+                    }
+                    boardElement.appendChild(tile);
+                }
             }
         }
 
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            if (selected === null) {
-                for (let i = 0; i < level; i++) {
-                    if (ctx.isPointInPath(ctx.getImageData(pikachu[i].x, pikachu[i].y, 1, 1).data, pikachu[i].x, pikachu[i].y)) {
-                        selected = i;
-                        break;
-                    }
-                }
+        function handleTileClick(tile, r, c) {
+            if (grid[r][c] === 0) return;
+
+            if (!selectedTile) {
+                selectedTile = { element: tile, r, c };
+                tile.classList.add('selected');
+                return;
+            }
+
+            const r1 = selectedTile.r;
+            const c1 = selectedTile.c;
+            const r2 = r;
+            const c2 = c;
+
+            if (r1 === r2 && c1 === c2) {
+                // Deselect
+                selectedTile.element.classList.remove('selected');
+                selectedTile = null;
+                return;
+            }
+
+            const path = getConnectPath(r1, c1, r2, c2);
+
+            if (path) {
+                // Match found
+                grid[r1][c1] = 0;
+                grid[r2][c2] = 0;
+
+                selectedTile.element.classList.remove('selected');
+                selectedTile.element.classList.add('empty');
+                tile.classList.add('empty');
+
+                score += 10;
+                scoreDisplay.textContent = score;
+                selectedTile = null;
+
+                checkWinCondition();
             } else {
-                for (let i = 0; i < level; i++) {
-                    if (ctx.isPointInPath(ctx.getImageData(pikachu[i].x, pikachu[i].y, 1, 1).data, pikachu[i].x, pikachu[i].y)) {
-                        if (pikachu[i].pair === selected && pairs[selected].first === null) {
-                            pairs[selected].first = i;
-                            pairs[selected].second = null;
-                            score += 1;
-                            scoreElement.textContent = score;
-                        } else if (pikachu[i].pair === selected && pairs[selected].second === null) {
-                            pairs[selected].second = i;
-                            pairs[selected].first = null;
-                            score += 1;
-                            scoreElement.textContent = score;
-                        } else {
-                            score -= 1;
-                            scoreElement.textContent = score;
-                        }
-                        selected = null;
+                // Invalid match, switch selection
+                selectedTile.element.classList.remove('selected');
+                selectedTile = { element: tile, r, c };
+                tile.classList.add('selected');
+            }
+        }
+
+        function checkWinCondition() {
+            let isEmpty = true;
+            for (let i = 1; i < rows - 1; i++) {
+                for (let j = 1; j < cols - 1; j++) {
+                    if (grid[i][j] !== 0) {
+                        isEmpty = false;
                         break;
                     }
                 }
             }
-            if (selected !== null) {
-                ctx.fillStyle = pikachu[selected].color === 'yellow' ? 'yellow' : 'black';
-                ctx.fillText('Pikachu', pikachu[selected].x, pikachu[selected].y);
+            if (isEmpty) {
+                setTimeout(() => {
+                    alert(`Chúc mừng! Bạn đã thắng với ${score} điểm!`);
+                    initGame(rows - 2, cols - 2, modeDisplay.textContent); // Reset current mode
+                }, 300);
             }
-        });
+        }
 
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            if (selected !== null) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let i = 0; i < level; i++) {
-                    ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
-                    ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
+        document.getElementById('easy-btn').addEventListener('click', () => initGame(6, 12, 'Dễ'));
+        document.getElementById('medium-btn').addEventListener('click', () => initGame(8, 14, 'Trung bình'));
+        document.getElementById('hard-btn').addEventListener('click', () => initGame(10, 16, 'Khó'));
+
+        // Start game on load
+        initGame(6, 12, 'Dễ');
+
+        // Pathfinding Algorithms
+        function checkLine(r1, c1, r2, c2) {
+            if (r1 !== r2 && c1 !== c2) return null;
+            if (r1 === r2) {
+                const minC = Math.min(c1, c2);
+                const maxC = Math.max(c1, c2);
+                for (let c = minC + 1; c < maxC; c++) {
+                    if (grid[r1][c] !== 0) return null;
                 }
-                ctx.fillStyle = pikachu[selected].color === 'yellow' ? 'yellow' : 'black';
-                ctx.fillText('Pikachu', x, y);
-                dragging = true;
-            }
-        });
-
-        canvas.addEventListener('mouseout', () => {
-            if (dragging) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let i = 0; i < level; i++) {
-                    ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
-                    ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
+                return [[r1, c1], [r2, c2]];
+            } else {
+                const minR = Math.min(r1, r2);
+                const maxR = Math.max(r1, r2);
+                for (let r = minR + 1; r < maxR; r++) {
+                    if (grid[r][c1] !== 0) return null;
                 }
-                dragging = false;
+                return [[r1, c1], [r2, c2]];
             }
-        });
+        }
 
-        resetGame();
+        function checkL(r1, c1, r2, c2) {
+            if (grid[r1][c2] === 0 && checkLine(r1, c1, r1, c2) && checkLine(r1, c2, r2, c2)) {
+                return [[r1, c1], [r1, c2], [r2, c2]];
+            }
+            if (grid[r2][c1] === 0 && checkLine(r1, c1, r2, c1) && checkLine(r2, c1, r2, c2)) {
+                return [[r1, c1], [r2, c1], [r2, c2]];
+            }
+            return null;
+        }
+
+        function checkZ(r1, c1, r2, c2) {
+            // Check horizontal paths
+            for (let c = 0; c < cols; c++) {
+                if (c !== c1 && grid[r1][c] === 0 && checkLine(r1, c1, r1, c)) {
+                    if (grid[r2][c] === 0 && checkLine(r1, c, r2, c) && checkLine(r2, c, r2, c2)) {
+                        return [[r1, c1], [r1, c], [r2, c], [r2, c2]];
+                    }
+                }
+            }
+
+            // Check vertical paths
+            for (let r = 0; r < rows; r++) {
+                if (r !== r1 && grid[r][c1] === 0 && checkLine(r1, c1, r, c1)) {
+                    if (grid[r][c2] === 0 && checkLine(r, c1, r, c2) && checkLine(r, c2, r2, c2)) {
+                        return [[r1, c1], [r, c1], [r, c2], [r2, c2]];
+                    }
+                }
+            }
+            return null;
+        }
+
+        function getConnectPath(r1, c1, r2, c2) {
+            if (r1 === r2 && c1 === c2) return null;
+            if (grid[r1][c1] !== grid[r2][c2]) return null;
+            let path = checkLine(r1, c1, r2, c2);
+            if (path) return path;
+            path = checkL(r1, c1, r2, c2);
+            if (path) return path;
+            path = checkZ(r1, c1, r2, c2);
+            return path;
+        }
     </script>
 </body>
 </html>
