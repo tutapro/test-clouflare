@@ -6,189 +6,316 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pikachu Connect</title>
     <script src='https://cdn.tailwindcss.com'></script>
-    <script src="https://kit.fontawesome.com/your-font-api-key.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Open Sans', sans-serif;
             background-color: #f0f0f0;
+            overflow-x: hidden;
         }
         .game-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 40px auto;
             background-color: #fff;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            gap: 5px;
+            margin: 40px auto;
+            position: relative;
+            background: #e0e0e0;
+            padding: 5px;
+            border-radius: 8px;
         }
         .card {
             background-color: #fff;
-            border-radius: 10px;
-            padding: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
             cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            width: 100%;
+            aspect-ratio: 1;
         }
-        .card:hover {
+        .card:hover:not(.empty) {
             transform: scale(1.05);
-            transition: 0.2s;
         }
-        .matched {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .card.empty {
+            background-color: transparent;
+            box-shadow: none;
+            cursor: default;
         }
-        .connection-line {
+        .card.selected {
+            outline: 3px solid #ff69b4;
+            transform: scale(1.05);
+        }
+
+        .line-container {
             position: absolute;
-            background-color: #ff69b4;
-            border-radius: 5px;
-            padding: 5px;
-            font-size: 12px;
-            color: #fff;
-            z-index: 1;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            overflow: visible;
         }
-        .connection-line::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-style: solid;
-            border-width: 0 10px 10px 10px;
-            border-color: transparent transparent #ff69b4 transparent;
-        }
+
         .confetti {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2;
+            pointer-events: none;
+            z-index: 100;
         }
         .confetti span {
             position: absolute;
-            background-color: #ff69b4;
-            border-radius: 50%;
             width: 10px;
             height: 10px;
-            animation: confetti 1s infinite;
+            animation: confetti-fall linear forwards;
         }
-        @keyframes confetti {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1 class="text-3xl text-center mb-4">Pikachu Connect</h1>
-        <div class="grid-container" id="grid-container">
-            <!-- Tile cards will be generated dynamically -->
+
+        <div class="flex justify-center mb-4">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" id="new-game-button">New Game</button>
         </div>
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" id="new-game-button">New Game</button>
+
+        <div class="relative w-fit mx-auto mt-8">
+            <div class="grid-container" id="grid-container"></div>
+            <svg class="line-container" id="line-container"></svg>
+        </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/web-audio-api@2.0.1/dist/web-audio-api.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@web-audio-api/audio-worklet@2.0.1/dist/audio-worklet.min.js"></script>
+
     <script>
-        // Generate tile cards
         const gridContainer = document.getElementById('grid-container');
         const newGameButton = document.getElementById('new-game-button');
-        const tiles = ['🐰', '🐶', '🐱', '🐔', '🐷', '🐴', '🐲', '🐸', '🐺', '🐻'];
-        const gridRows = 4;
-        const gridCols = 4;
-        for (let i = 0; i < gridRows; i++) {
-            const row = document.createElement('div');
-            row.classList.add('grid-row');
-            gridContainer.appendChild(row);
-            for (let j = 0; j < gridCols; j++) {
-                const tile = document.createElement('div');
-                tile.classList.add('card');
-                tile.dataset.value = tiles[Math.floor(Math.random() * tiles.length)];
-                tile.addEventListener('click', handleTileClick);
-                row.appendChild(tile);
+        const lineContainer = document.getElementById('line-container');
+
+        const tiles = ['🐰', '🐶', '🐱', '🐔', '🐷', '🐴', '🐲', '🐸', '🐺', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐵'];
+        const gridRows = 6;
+        const gridCols = 10;
+
+        let board = [];
+        let selectedTile = null;
+        let pairsRemaining = 0;
+
+        function initGame() {
+            gridContainer.style.gridTemplateColumns = `repeat(${gridCols}, 60px)`;
+            gridContainer.style.gridTemplateRows = `repeat(${gridRows}, 60px)`;
+
+            const numPairs = (gridRows * gridCols) / 2;
+            pairsRemaining = numPairs;
+            let tilePool = [];
+            for (let i = 0; i < numPairs; i++) {
+                const tile = tiles[i % tiles.length];
+                tilePool.push(tile, tile);
+            }
+
+            for (let i = tilePool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tilePool[i], tilePool[j]] = [tilePool[j], tilePool[i]];
+            }
+
+            board = [];
+            gridContainer.innerHTML = '';
+            lineContainer.innerHTML = '';
+            selectedTile = null;
+
+            for (let r = 0; r < gridRows; r++) {
+                let row = [];
+                for (let c = 0; c < gridCols; c++) {
+                    const value = tilePool.pop();
+                    row.push(value);
+
+                    const cell = document.createElement('div');
+                    cell.classList.add('card');
+                    cell.textContent = value;
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.addEventListener('click', () => handleTileClick(r, c));
+                    gridContainer.appendChild(cell);
+                }
+                board.push(row);
             }
         }
-        newGameButton.addEventListener('click', startNewGame);
 
-        // Handle tile click
-        function handleTileClick(event) {
-            const tile = event.target;
-            if (tile.classList.contains('matched')) return;
-            const gridRow = tile.parentNode;
-            const gridContainer = gridRow.parentNode;
-            const tiles = Array.from(gridContainer.children);
-            const values = tiles.map((tile) => tile.dataset.value);
-            const index = values.indexOf(tile.dataset.value);
-            const tile1 = tiles[index];
-            const tile2 = event.target;
-            if (tile1.dataset.value === tile2.dataset.value) {
-                tile1.classList.add('matched');
-                tile2.classList.add('matched');
-                const gridContainer = tile1.parentNode;
-                const tiles = Array.from(gridContainer.children);
-                const values = tiles.map((tile) => tile.dataset.value);
-                const indices = values.map((value, index) => index);
-                const index1 = indices.indexOf(index);
-                const index2 = indices.indexOf(index + 1);
-                const tile1 = tiles[index1];
-                const tile2 = tiles[index2];
-                if (tile1 && tile2) {
-                    const connectionLine = document.createElement('div');
-                    connectionLine.classList.add('connection-line');
-                    connectionLine.style.top = `${tile1.offsetTop + tile1.offsetHeight / 2}px`;
-                    connectionLine.style.left = `${tile1.offsetLeft + tile1.offsetWidth / 2}px`;
-                    connectionLine.style.transform = `translate(${tile2.offsetLeft - tile1.offsetLeft + tile1.offsetWidth / 2}px, ${tile2.offsetTop - tile1.offsetTop + tile1.offsetHeight / 2}px)`;
-                    tile1.parentNode.appendChild(connectionLine);
-                    setTimeout(() => {
-                        connectionLine.remove();
-                        tile1.classList.remove('matched');
-                        tile2.classList.remove('matched');
-                    }, 1000);
+        function getCellElement(r, c) {
+            return gridContainer.children[r * gridCols + c];
+        }
+
+        function getEmptyCell(board, r, c) {
+            if (r < 0 || r >= board.length || c < 0 || c >= board[0].length) return true;
+            return board[r][c] === 0;
+        }
+
+        function checkLineR(board, c, r1, r2) {
+            const min = Math.min(r1, r2);
+            const max = Math.max(r1, r2);
+            for (let r = min + 1; r < max; r++) {
+                if (!getEmptyCell(board, r, c)) return false;
+            }
+            return true;
+        }
+
+        function checkLineC(board, r, c1, c2) {
+            const min = Math.min(c1, c2);
+            const max = Math.max(c1, c2);
+            for (let c = min + 1; c < max; c++) {
+                if (!getEmptyCell(board, r, c)) return false;
+            }
+            return true;
+        }
+
+        function findPath(board, r1, c1, r2, c2) {
+            if (board[r1][c1] !== board[r2][c2] || board[r1][c1] === 0) return null;
+            if (r1 === r2 && c1 === c2) return null;
+
+            const rows = board.length;
+            const cols = board[0].length;
+
+            if (r1 === r2 && checkLineC(board, r1, c1, c2)) return [{r: r1, c: c1}, {r: r2, c: c2}];
+            if (c1 === c2 && checkLineR(board, c1, r1, r2)) return [{r: r1, c: c1}, {r: r2, c: c2}];
+
+            if (getEmptyCell(board, r1, c2) && checkLineC(board, r1, c1, c2) && checkLineR(board, c2, r1, r2)) {
+                return [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c2}];
+            }
+            if (getEmptyCell(board, r2, c1) && checkLineR(board, c1, r1, r2) && checkLineC(board, r2, c1, c2)) {
+                return [{r: r1, c: c1}, {r: r2, c: c1}, {r: r2, c: c2}];
+            }
+
+            for (let r = -1; r <= rows; r++) {
+                if (checkLineR(board, c1, r1, r) && (r === r1 || getEmptyCell(board, r, c1))) {
+                    if (checkLineR(board, c2, r2, r) && (r === r2 || getEmptyCell(board, r, c2))) {
+                        if (checkLineC(board, r, c1, c2) && getEmptyCell(board, r, c1) && getEmptyCell(board, r, c2)) {
+                            return [{r: r1, c: c1}, {r: r, c: c1}, {r: r, c: c2}, {r: r2, c: c2}];
+                        }
+                    }
                 }
             }
+
+            for (let c = -1; c <= cols; c++) {
+                if (checkLineC(board, r1, c1, c) && (c === c1 || getEmptyCell(board, r1, c))) {
+                    if (checkLineC(board, r2, c2, c) && (c === c2 || getEmptyCell(board, r2, c))) {
+                        if (checkLineR(board, c, r1, r2) && getEmptyCell(board, r1, c) && getEmptyCell(board, r2, c)) {
+                            return [{r: r1, c: c1}, {r: r1, c: c}, {r: r2, c: c}, {r: r2, c: c2}];
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
-        // Start new game
-        function startNewGame() {
-            const gridContainer = document.getElementById('grid-container');
-            const tiles = Array.from(gridContainer.children);
-            tiles.forEach((tile) => {
-                tile.classList.remove('matched');
-                tile.dataset.value = '';
-            });
-            const newTiles = tiles.map(() => tiles[Math.floor(Math.random() * tiles.length)]);
-            tiles.forEach((tile, index) => {
-                tile.dataset.value = newTiles[index].dataset.value;
-            });
+        function drawLine(path) {
+            lineContainer.innerHTML = '';
+            if (!path || path.length < 2) return;
+
+            let svgHtml = '';
+            for (let i = 0; i < path.length - 1; i++) {
+                const p1 = path[i];
+                const p2 = path[i+1];
+
+                const x1 = 35 + p1.c * 65;
+                const y1 = 35 + p1.r * 65;
+                const x2 = 35 + p2.c * 65;
+                const y2 = 35 + p2.r * 65;
+
+                svgHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ff69b4" stroke-width="4" stroke-linecap="round"/>`;
+            }
+
+            lineContainer.innerHTML = svgHtml;
+
+            setTimeout(() => {
+                lineContainer.innerHTML = '';
+            }, 300);
         }
 
-        // Confetti effect
+        function handleTileClick(r, c) {
+            if (board[r][c] === 0) return;
+
+            const el = getCellElement(r, c);
+
+            if (!selectedTile) {
+                selectedTile = {r, c, el};
+                el.classList.add('selected');
+            } else {
+                if (selectedTile.r === r && selectedTile.c === c) {
+                    el.classList.remove('selected');
+                    selectedTile = null;
+                    return;
+                }
+
+                const path = findPath(board, selectedTile.r, selectedTile.c, r, c);
+
+                if (path) {
+                    drawLine(path);
+
+                    const el1 = selectedTile.el;
+                    const el2 = el;
+
+                    el1.classList.remove('selected');
+                    el1.classList.add('empty');
+                    el1.textContent = '';
+
+                    el2.classList.add('empty');
+                    el2.textContent = '';
+
+                    board[selectedTile.r][selectedTile.c] = 0;
+                    board[r][c] = 0;
+
+                    pairsRemaining--;
+                    if (pairsRemaining === 0) {
+                        setTimeout(showConfetti, 500);
+                    }
+                } else {
+                    selectedTile.el.classList.remove('selected');
+                }
+
+                selectedTile = null;
+            }
+        }
+
         function showConfetti() {
             const confettiContainer = document.createElement('div');
             confettiContainer.classList.add('confetti');
             document.body.appendChild(confettiContainer);
-            for (let i = 0; i < 100; i++) {
+            const colors = ['#ff69b4', '#33cc33', '#6666ff', '#ffff66', '#ff9933'];
+
+            for (let i = 0; i < 150; i++) {
                 const confetti = document.createElement('span');
-                confetti.style.top = `${Math.random() * 100}%`;
                 confetti.style.left = `${Math.random() * 100}%`;
-                confetti.style.animationDelay = `${Math.random() * 1}s`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                if (Math.random() > 0.5) {
+                    confetti.style.borderRadius = '50%';
+                }
                 confettiContainer.appendChild(confetti);
             }
             setTimeout(() => {
                 confettiContainer.remove();
-            }, 2000);
+            }, 6000);
         }
+
+        newGameButton.addEventListener('click', initGame);
+
+        initGame();
     </script>
 </body>
 </html>
