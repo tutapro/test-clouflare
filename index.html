@@ -3,112 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
+    <title>Game Rắn Săn Mồi</title>
     <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-xW6R415xSMjc3j9arIVKWew+u1EZWEiN9H3sLGiFIKxIaUMldhmKDPGxkSjwlhRO+nFGIanZJTAyVH/YMgChA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/your-font-awesome-key.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 font-sans text-gray-900">
-    <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
-        <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 lg:p-8 mb-4">
-            <h1 class="text-3xl font-bold mb-4">Pikachu Connect</h1>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <?php for ($i = 0; $i < 9; $i++) { ?>
-                    <div class="bg-gray-200 rounded-lg shadow-md p-4 cursor-pointer" onclick="clickTile(this)" id="tile-<?php echo $i; ?>">
-                        <i class="fas fa-pikachu text-3xl text-yellow-500"></i>
-                    </div>
-                <?php } ?>
-            </div>
-            <div class="bg-gray-200 rounded-lg shadow-md p-4 mb-4" id="score-panel">
-                <p class="text-lg font-bold mb-2">Score: <span id="score">0</span></p>
-                <p class="text-lg font-bold mb-2">Moves: <span id="moves">0</span></p>
-            </div>
-            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="newGame()">New Game</button>
-        </div>
-        <div id="game-over-panel" class="bg-red-200 rounded-lg shadow-md p-4 mb-4" style="display: none;">
-            <h1 class="text-3xl font-bold mb-4">Game Over!</h1>
-            <p class="text-lg font-bold mb-2">Your final score is: <span id="final-score">0</span></p>
-            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="newGame()">Play Again</button>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/web-audio-api@2.0.0/dist/web-audio-api.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/confetti@1.0.1/dist/confetti.min.js"></script>
-    <script>
-        let tiles = [];
-        let score = 0;
-        let moves = 0;
-        let gameOver = false;
-
-        function clickTile(tile) {
-            if (gameOver) return;
-            if (tile.classList.contains('matched')) return;
-            if (tile.classList.contains('selected')) {
-                tile.classList.remove('selected');
-                return;
-            }
-            tile.classList.add('selected');
-            if (tiles.length < 2) tiles.push(tile);
-            if (tiles.length === 2) {
-                checkMatch();
-            }
-        }
-
-        function checkMatch() {
-            let tile1 = tiles[0];
-            let tile2 = tiles[1];
-            if (tile1.id === tile2.id) {
-                tile1.classList.add('matched');
-                tile2.classList.add('matched');
-                score += 10;
-                moves++;
-                updateScorePanel();
-                setTimeout(() => {
-                    tile1.classList.remove('matched');
-                    tile2.classList.remove('matched');
-                    tile1.classList.remove('selected');
-                    tile2.classList.remove('selected');
-                    tiles = [];
-                }, 1000);
-            } else {
-                setTimeout(() => {
-                    tile1.classList.remove('selected');
-                    tile2.classList.remove('selected');
-                    tiles = [];
-                }, 1000);
-            }
-        }
-
-        function updateScorePanel() {
-            document.getElementById('score').textContent = score;
-            document.getElementById('moves').textContent = moves;
-        }
-
-        function newGame() {
-            gameOver = false;
-            score = 0;
-            moves = 0;
-            updateScorePanel();
-            for (let i = 0; i < 9; i++) {
-                document.getElementById(`tile-${i}`).classList.remove('matched');
-                document.getElementById(`tile-${i}`).classList.remove('selected');
-            }
-            document.getElementById('game-over-panel').style.display = 'none';
-        }
-
-        function gameOverPanel() {
-            gameOver = true;
-            document.getElementById('game-over-panel').style.display = 'block';
-            document.getElementById('final-score').textContent = score;
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            for (let i = 0; i < 9; i++) {
-                document.getElementById(`tile-${i}`).addEventListener('click', () => clickTile(document.getElementById(`tile-${i}`)));
-            }
-            document.getElementById('new-game-button').addEventListener('click', () => newGame());
-        });
-    </script>
-</body>
-</html>
+<body>
+    <div class="bg-gray-100 h-screen w-screen flex justify-center items-center">
+        <div class="bg-white rounded-lg shadow-md w-96 h-96 flex flex-col items-center p-4">
+            <h1 class="text-lg font-bold mb-4">Game Rắn Săn Mồi</h1>
+            <div class="bg-gray-200 rounded-lg w-80 h-80 flex flex-wrap justify-center items-center">
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="snake"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div>
+                <div class="w-20 h-20 bg-gray-300 rounded-lg mb-2 mr-2" id="prey"></div
