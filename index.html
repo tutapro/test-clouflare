@@ -2,193 +2,113 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pikachu Connect</title>
     <script src='https://cdn.tailwindcss.com'></script>
-    <script src="https://kit.fontawesome.com/your-font-api-key.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-xW6R415xSMjc3j9arIVKWew+u1EZWEiN9H3sLGiFIKxIaUMldhmKDPGxkSjwlhRO+nFGIanZJTAyVH/YMgChA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Open Sans', sans-serif;
-            background-color: #f0f0f0;
-        }
-        .game-container {
-            max-width: 800px;
-            margin: 40px auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-        .card {
-            background-color: #fff;
-            border-radius: 10px;
-            padding: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-        }
-        .card:hover {
-            transform: scale(1.05);
-            transition: 0.2s;
-        }
-        .matched {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .connection-line {
-            position: absolute;
-            background-color: #ff69b4;
-            border-radius: 5px;
-            padding: 5px;
-            font-size: 12px;
-            color: #fff;
-            z-index: 1;
-        }
-        .connection-line::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-style: solid;
-            border-width: 0 10px 10px 10px;
-            border-color: transparent transparent #ff69b4 transparent;
-        }
-        .confetti {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2;
-        }
-        .confetti span {
-            position: absolute;
-            background-color: #ff69b4;
-            border-radius: 50%;
-            width: 10px;
-            height: 10px;
-            animation: confetti 1s infinite;
-        }
-        @keyframes confetti {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-        }
-    </style>
 </head>
-<body>
-    <div class="game-container">
-        <h1 class="text-3xl text-center mb-4">Pikachu Connect</h1>
-        <div class="grid-container" id="grid-container">
-            <!-- Tile cards will be generated dynamically -->
+<body class="bg-gray-100 font-sans text-gray-900">
+    <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+        <div class="bg-white rounded-lg shadow-lg p-4 md:p-6 lg:p-8 mb-4">
+            <h1 class="text-3xl font-bold mb-4">Pikachu Connect</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <?php for ($i = 0; $i < 9; $i++) { ?>
+                    <div class="bg-gray-200 rounded-lg shadow-md p-4 cursor-pointer" onclick="clickTile(this)" id="tile-<?php echo $i; ?>">
+                        <i class="fas fa-pikachu text-3xl text-yellow-500"></i>
+                    </div>
+                <?php } ?>
+            </div>
+            <div class="bg-gray-200 rounded-lg shadow-md p-4 mb-4" id="score-panel">
+                <p class="text-lg font-bold mb-2">Score: <span id="score">0</span></p>
+                <p class="text-lg font-bold mb-2">Moves: <span id="moves">0</span></p>
+            </div>
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="newGame()">New Game</button>
         </div>
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" id="new-game-button">New Game</button>
+        <div id="game-over-panel" class="bg-red-200 rounded-lg shadow-md p-4 mb-4" style="display: none;">
+            <h1 class="text-3xl font-bold mb-4">Game Over!</h1>
+            <p class="text-lg font-bold mb-2">Your final score is: <span id="final-score">0</span></p>
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="newGame()">Play Again</button>
+        </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/web-audio-api@2.0.1/dist/web-audio-api.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@web-audio-api/audio-worklet@2.0.1/dist/audio-worklet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web-audio-api@2.0.0/dist/web-audio-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/confetti@1.0.1/dist/confetti.min.js"></script>
     <script>
-        // Generate tile cards
-        const gridContainer = document.getElementById('grid-container');
-        const newGameButton = document.getElementById('new-game-button');
-        const tiles = ['🐰', '🐶', '🐱', '🐔', '🐷', '🐴', '🐲', '🐸', '🐺', '🐻'];
-        const gridRows = 4;
-        const gridCols = 4;
-        for (let i = 0; i < gridRows; i++) {
-            const row = document.createElement('div');
-            row.classList.add('grid-row');
-            gridContainer.appendChild(row);
-            for (let j = 0; j < gridCols; j++) {
-                const tile = document.createElement('div');
-                tile.classList.add('card');
-                tile.dataset.value = tiles[Math.floor(Math.random() * tiles.length)];
-                tile.addEventListener('click', handleTileClick);
-                row.appendChild(tile);
+        let tiles = [];
+        let score = 0;
+        let moves = 0;
+        let gameOver = false;
+
+        function clickTile(tile) {
+            if (gameOver) return;
+            if (tile.classList.contains('matched')) return;
+            if (tile.classList.contains('selected')) {
+                tile.classList.remove('selected');
+                return;
+            }
+            tile.classList.add('selected');
+            if (tiles.length < 2) tiles.push(tile);
+            if (tiles.length === 2) {
+                checkMatch();
             }
         }
-        newGameButton.addEventListener('click', startNewGame);
 
-        // Handle tile click
-        function handleTileClick(event) {
-            const tile = event.target;
-            if (tile.classList.contains('matched')) return;
-            const gridRow = tile.parentNode;
-            const gridContainer = gridRow.parentNode;
-            const tiles = Array.from(gridContainer.children);
-            const values = tiles.map((tile) => tile.dataset.value);
-            const index = values.indexOf(tile.dataset.value);
-            const tile1 = tiles[index];
-            const tile2 = event.target;
-            if (tile1.dataset.value === tile2.dataset.value) {
+        function checkMatch() {
+            let tile1 = tiles[0];
+            let tile2 = tiles[1];
+            if (tile1.id === tile2.id) {
                 tile1.classList.add('matched');
                 tile2.classList.add('matched');
-                const gridContainer = tile1.parentNode;
-                const tiles = Array.from(gridContainer.children);
-                const values = tiles.map((tile) => tile.dataset.value);
-                const indices = values.map((value, index) => index);
-                const index1 = indices.indexOf(index);
-                const index2 = indices.indexOf(index + 1);
-                const tile1 = tiles[index1];
-                const tile2 = tiles[index2];
-                if (tile1 && tile2) {
-                    const connectionLine = document.createElement('div');
-                    connectionLine.classList.add('connection-line');
-                    connectionLine.style.top = `${tile1.offsetTop + tile1.offsetHeight / 2}px`;
-                    connectionLine.style.left = `${tile1.offsetLeft + tile1.offsetWidth / 2}px`;
-                    connectionLine.style.transform = `translate(${tile2.offsetLeft - tile1.offsetLeft + tile1.offsetWidth / 2}px, ${tile2.offsetTop - tile1.offsetTop + tile1.offsetHeight / 2}px)`;
-                    tile1.parentNode.appendChild(connectionLine);
-                    setTimeout(() => {
-                        connectionLine.remove();
-                        tile1.classList.remove('matched');
-                        tile2.classList.remove('matched');
-                    }, 1000);
-                }
+                score += 10;
+                moves++;
+                updateScorePanel();
+                setTimeout(() => {
+                    tile1.classList.remove('matched');
+                    tile2.classList.remove('matched');
+                    tile1.classList.remove('selected');
+                    tile2.classList.remove('selected');
+                    tiles = [];
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    tile1.classList.remove('selected');
+                    tile2.classList.remove('selected');
+                    tiles = [];
+                }, 1000);
             }
         }
 
-        // Start new game
-        function startNewGame() {
-            const gridContainer = document.getElementById('grid-container');
-            const tiles = Array.from(gridContainer.children);
-            tiles.forEach((tile) => {
-                tile.classList.remove('matched');
-                tile.dataset.value = '';
-            });
-            const newTiles = tiles.map(() => tiles[Math.floor(Math.random() * tiles.length)]);
-            tiles.forEach((tile, index) => {
-                tile.dataset.value = newTiles[index].dataset.value;
-            });
+        function updateScorePanel() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('moves').textContent = moves;
         }
 
-        // Confetti effect
-        function showConfetti() {
-            const confettiContainer = document.createElement('div');
-            confettiContainer.classList.add('confetti');
-            document.body.appendChild(confettiContainer);
-            for (let i = 0; i < 100; i++) {
-                const confetti = document.createElement('span');
-                confetti.style.top = `${Math.random() * 100}%`;
-                confetti.style.left = `${Math.random() * 100}%`;
-                confetti.style.animationDelay = `${Math.random() * 1}s`;
-                confettiContainer.appendChild(confetti);
+        function newGame() {
+            gameOver = false;
+            score = 0;
+            moves = 0;
+            updateScorePanel();
+            for (let i = 0; i < 9; i++) {
+                document.getElementById(`tile-${i}`).classList.remove('matched');
+                document.getElementById(`tile-${i}`).classList.remove('selected');
             }
-            setTimeout(() => {
-                confettiContainer.remove();
-            }, 2000);
+            document.getElementById('game-over-panel').style.display = 'none';
         }
+
+        function gameOverPanel() {
+            gameOver = true;
+            document.getElementById('game-over-panel').style.display = 'block';
+            document.getElementById('final-score').textContent = score;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            for (let i = 0; i < 9; i++) {
+                document.getElementById(`tile-${i}`).addEventListener('click', () => clickTile(document.getElementById(`tile-${i}`)));
+            }
+            document.getElementById('new-game-button').addEventListener('click', () => newGame());
+        });
     </script>
 </body>
 </html>
