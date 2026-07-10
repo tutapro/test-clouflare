@@ -5,164 +5,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pikachu Connect</title>
     <script src='https://cdn.tailwindcss.com'></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://kit.fontawesome.com/your-font-api-key.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons&display=swap" rel="stylesheet">
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+            padding: 20px;
+        }
+        
+        .grid-item {
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+        }
+        
+        .grid-item:hover {
+            background-color: #ddd;
+        }
+        
+        .grid-item.active {
+            background-color: #ccc;
+        }
+        
+        .grid-item.matched {
+            background-color: #0f0;
+            color: #fff;
+        }
+        
+        .connection-line {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: #000;
+        }
+        
+        .connection-line.vertical {
+            transform: rotate(90deg);
+        }
+        
+        .confetti {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        
+        .confetti.show {
+            display: block;
+        }
+    </style>
 </head>
-<body class="bg-black text-white">
-    <div class="flex justify-center items-center h-screen">
-        <div class="bg-yellow-500 p-4 rounded-md shadow-md">
-            <h1 class="text-3xl font-bold mb-4">Pikachu Connect</h1>
-            <div class="flex justify-between items-center mb-4">
-                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="easy-button">Dễ</button>
-                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="medium-button">Trung bình</button>
-                <button class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-md" id="hard-button">Khó</button>
-            </div>
-            <canvas id="game-canvas" class="w-full h-screen"></canvas>
-            <div class="flex justify-between items-center mt-4">
-                <p class="text-lg font-bold">Điểm số: <span id="score">0</span></p>
-                <p class="text-lg font-bold">Chế độ chơi: <span id="mode">Dễ</span></p>
-            </div>
-        </div>
+<body class="bg-gray-100">
+    <div class="grid-container mx-auto" id="grid-container">
+        <!-- Grid items will be generated dynamically -->
     </div>
     <script>
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        const easyButton = document.getElementById('easy-button');
-        const mediumButton = document.getElementById('medium-button');
-        const hardButton = document.getElementById('hard-button');
-        const scoreElement = document.getElementById('score');
-        const modeElement = document.getElementById('mode');
-        let score = 0;
-        let mode = 'easy';
-        let level = 5;
-        let pikachu = [];
-        let pairs = [];
-        let selected = null;
-        let dragging = false;
+        const gridContainer = document.getElementById('grid-container');
+        const gridItems = [];
+        const emojis = ['🐶', '🐱', '🐔', '🐷', '🐴', '🐲', '🐸', '🐹', '🐺', '🐻'];
+        const gridSize = 4;
+        const gridItemSize = 100;
+        const gridGap = 10;
+        const connectionLineColor = '#000';
+        const matchedColor = '#0f0';
+        const confettiColor = '#ff69b4';
 
-        easyButton.addEventListener('click', () => {
-            mode = 'easy';
-            level = 5;
-            score = 0;
-            modeElement.textContent = 'Dễ';
-            scoreElement.textContent = '0';
-            resetGame();
-        });
+        // Generate grid items
+        for (let i = 0; i < gridSize * gridSize; i++) {
+            const gridItem = document.createElement('div');
+            gridItem.classList.add('grid-item');
+            gridItem.dataset.index = i;
+            gridItem.dataset.emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            gridItem.addEventListener('click', handleGridItemClick);
+            gridContainer.appendChild(gridItem);
+            gridItems.push(gridItem);
+        }
 
-        mediumButton.addEventListener('click', () => {
-            mode = 'medium';
-            level = 10;
-            score = 0;
-            modeElement.textContent = 'Trung bình';
-            scoreElement.textContent = '0';
-            resetGame();
-        });
+        // Function to handle grid item click
+        function handleGridItemClick(event) {
+            const gridItem = event.target;
+            const index = gridItem.dataset.index;
+            const emoji = gridItem.dataset.emoji;
+            const activeGridItems = gridItems.filter(item => item.classList.contains('active'));
+            const activeGridItemIndex = activeGridItems[0].dataset.index;
+            const activeGridItemEmoji = activeGridItems[0].dataset.emoji;
 
-        hardButton.addEventListener('click', () => {
-            mode = 'hard';
-            level = 15;
-            score = 0;
-            modeElement.textContent = 'Khó';
-            scoreElement.textContent = '0';
-            resetGame();
-        });
-
-        function resetGame() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            pikachu = [];
-            pairs = [];
-            selected = null;
-            dragging = false;
-            for (let i = 0; i < level; i++) {
-                pikachu.push({
-                    x: Math.random() * (canvas.width - 100),
-                    y: Math.random() * (canvas.height - 100),
-                    color: Math.random() < 0.5 ? 'yellow' : 'black',
-                    pair: Math.floor(Math.random() * level),
-                });
-                pairs.push({
-                    first: null,
-                    second: null,
-                });
-            }
-            ctx.font = '24px Outfit';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            for (let i = 0; i < level; i++) {
-                ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
-                ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
+            // Check if the clicked grid item matches the active grid item
+            if (emoji === activeGridItemEmoji) {
+                gridItem.classList.add('active');
+                activeGridItems[0].classList.add('matched');
+                const connectionLine = document.createElement('div');
+                connectionLine.classList.add('connection-line', 'vertical');
+                connectionLine.style.top = `${gridItem.offsetTop}px`;
+                connectionLine.style.left = `${gridItem.offsetLeft}px`;
+                connectionLine.style.width = `${gridItem.offsetWidth}px`;
+                connectionLine.style.height = `${gridItem.offsetHeight}px`;
+                connectionLine.style.transform = `rotate(${Math.random() * 360}deg)`;
+                gridContainer.appendChild(connectionLine);
+                setTimeout(() => {
+                    connectionLine.remove();
+                    gridItem.classList.remove('active');
+                    activeGridItems[0].classList.remove('matched');
+                    gridItem.dataset.matched = 'true';
+                    activeGridItems[0].dataset.matched = 'true';
+                    checkForWin();
+                }, 1000);
             }
         }
 
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            if (selected === null) {
-                for (let i = 0; i < level; i++) {
-                    if (ctx.isPointInPath(ctx.getImageData(pikachu[i].x, pikachu[i].y, 1, 1).data, pikachu[i].x, pikachu[i].y)) {
-                        selected = i;
-                        break;
-                    }
-                }
-            } else {
-                for (let i = 0; i < level; i++) {
-                    if (ctx.isPointInPath(ctx.getImageData(pikachu[i].x, pikachu[i].y, 1, 1).data, pikachu[i].x, pikachu[i].y)) {
-                        if (pikachu[i].pair === selected && pairs[selected].first === null) {
-                            pairs[selected].first = i;
-                            pairs[selected].second = null;
-                            score += 1;
-                            scoreElement.textContent = score;
-                        } else if (pikachu[i].pair === selected && pairs[selected].second === null) {
-                            pairs[selected].second = i;
-                            pairs[selected].first = null;
-                            score += 1;
-                            scoreElement.textContent = score;
-                        } else {
-                            score -= 1;
-                            scoreElement.textContent = score;
-                        }
-                        selected = null;
-                        break;
-                    }
-                }
+        // Function to check if the game has been won
+        function checkForWin() {
+            const matchedGridItems = gridItems.filter(item => item.dataset.matched === 'true');
+            if (matchedGridItems.length === gridItems.length) {
+                // Game won, show confetti
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.backgroundImage = `linear-gradient(to bottom, ${confettiColor} 0%, ${confettiColor} 50%, #fff 50%, #fff 100%)`;
+                confetti.style.backgroundSize = '100% 100px';
+                confetti.style.backgroundRepeat = 'no-repeat';
+                confetti.style.backgroundPosition = 'bottom';
+                gridContainer.appendChild(confetti);
+                confetti.classList.add('show');
+                setTimeout(() => {
+                    confetti.remove();
+                }, 2000);
             }
-            if (selected !== null) {
-                ctx.fillStyle = pikachu[selected].color === 'yellow' ? 'yellow' : 'black';
-                ctx.fillText('Pikachu', pikachu[selected].x, pikachu[selected].y);
-            }
-        });
+        }
 
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            if (selected !== null) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let i = 0; i < level; i++) {
-                    ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
-                    ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
-                }
-                ctx.fillStyle = pikachu[selected].color === 'yellow' ? 'yellow' : 'black';
-                ctx.fillText('Pikachu', x, y);
-                dragging = true;
-            }
-        });
+        // Function to generate confetti
+        function generateConfetti() {
+            const confetti = document.createElement('div');
+            confetti.classList.add('confetti');
+            confetti.style.backgroundImage = `linear-gradient(to bottom, ${confettiColor} 0%, ${confettiColor} 50%, #fff 50%, #fff 100%)`;
+            confetti.style.backgroundSize = '100% 100px';
+            confetti.style.backgroundRepeat = 'no-repeat';
+            confetti.style.backgroundPosition = 'bottom';
+            confetti.style.width = '100px';
+            confetti.style.height = '100px';
+            confetti.style.top = `${Math.random() * (gridContainer.offsetHeight - 100)}px`;
+            confetti.style.left = `${Math.random() * (gridContainer.offsetWidth - 100)}px`;
+            confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+            confetti.style.opacity = '0.5';
+            gridContainer.appendChild(confetti);
+            setTimeout(() => {
+                confetti.remove();
+            }, 2000);
+        }
 
-        canvas.addEventListener('mouseout', () => {
-            if (dragging) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                for (let i = 0; i < level; i++) {
-                    ctx.fillStyle = pikachu[i].color === 'yellow' ? 'yellow' : 'black';
-                    ctx.fillText('Pikachu', pikachu[i].x, pikachu[i].y);
-                }
-                dragging = false;
-            }
-        });
-
-        resetGame();
+        // Show confetti when the game is won
+        checkForWin();
     </script>
 </body>
 </html>
