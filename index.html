@@ -3,162 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
+    <title>Game Rắn Săn Mồi</title>
     <script src='https://cdn.tailwindcss.com'></script>
-    <script src="https://kit.fontawesome.com/your-font-api-key.js" crossorigin="anonymous"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Icons&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/your-font-awesome-key.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
-            padding: 20px;
+        body {
+            font-family: 'Open Sans', sans-serif;
         }
-        
-        .grid-item {
-            background-color: #f0f0f0;
+        .game-container {
+            width: 800px;
+            height: 600px;
+            margin: 40px auto;
             border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #f7f7f7;
             padding: 20px;
-            cursor: pointer;
         }
-        
-        .grid-item:hover {
-            background-color: #ddd;
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(15, 40px);
+            gap: 5px;
         }
-        
-        .grid-item.active {
-            background-color: #ccc;
-        }
-        
-        .grid-item.matched {
-            background-color: #0f0;
+        .snake {
+            background-color: #008000;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
             color: #fff;
         }
-        
-        .connection-line {
-            position: absolute;
-            width: 2px;
-            height: 100%;
-            background-color: #000;
-        }
-        
-        .connection-line.vertical {
-            transform: rotate(90deg);
-        }
-        
-        .confetti {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-        }
-        
-        .confetti.show {
-            display: block;
+        .prey {
+            background-color: #ff0000;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #fff;
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <div class="grid-container mx-auto" id="grid-container">
-        <!-- Grid items will be generated dynamically -->
+<body>
+    <div class="game-container">
+        <h2 class="text-center text-2xl mb-4">Game Rắn Săn Mồi</h2>
+        <div class="game-board" id="game-board">
+            <!-- Tạo các ô game -->
+            <?php for ($i = 0; $i < 15; $i++) : ?>
+                <?php for ($j = 0; $j < 10; $j++) : ?>
+                    <div class="snake" id="snake-<?php echo $i . '-' . $j; ?>"></div>
+                <?php endfor; ?>
+            <?php endfor; ?>
+            <?php for ($i = 0; $i < 15; $i++) : ?>
+                <?php for ($j = 0; $j < 10; $j++) : ?>
+                    <div class="prey" id="prey-<?php echo $i . '-' . $j; ?>"></div>
+                <?php endfor; ?>
+            <?php endfor; ?>
+        </div>
+        <button class="btn btn-primary" id="start-button">Bắt đầu</button>
+        <button class="btn btn-secondary" id="reset-button">Reset</button>
     </div>
+
     <script>
-        const gridContainer = document.getElementById('grid-container');
-        const gridItems = [];
-        const emojis = ['🐶', '🐱', '🐔', '🐷', '🐴', '🐲', '🐸', '🐹', '🐺', '🐻'];
-        const gridSize = 4;
-        const gridItemSize = 100;
-        const gridGap = 10;
-        const connectionLineColor = '#000';
-        const matchedColor = '#0f0';
-        const confettiColor = '#ff69b4';
+        const gameBoard = document.getElementById('game-board');
+        const startButton = document.getElementById('start-button');
+        const resetButton = document.getElementById('reset-button');
+        let snakePosition = [];
+        let preyPosition = [];
+        let direction = 'right';
+        let score = 0;
 
-        // Generate grid items
-        for (let i = 0; i < gridSize * gridSize; i++) {
-            const gridItem = document.createElement('div');
-            gridItem.classList.add('grid-item');
-            gridItem.dataset.index = i;
-            gridItem.dataset.emoji = emojis[Math.floor(Math.random() * emojis.length)];
-            gridItem.addEventListener('click', handleGridItemClick);
-            gridContainer.appendChild(gridItem);
-            gridItems.push(gridItem);
+        // Tạo vị trí rắn và thức ăn
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 15; j++) {
+                const snakeElement = document.getElementById(`snake-${i}-${j}`);
+                snakeElement.style.top = `${j * 40}px`;
+                snakeElement.style.left = `${i * 40}px`;
+                snakePosition.push([i, j]);
+            }
         }
-
-        // Function to handle grid item click
-        function handleGridItemClick(event) {
-            const gridItem = event.target;
-            const index = gridItem.dataset.index;
-            const emoji = gridItem.dataset.emoji;
-            const activeGridItems = gridItems.filter(item => item.classList.contains('active'));
-            const activeGridItemIndex = activeGridItems[0].dataset.index;
-            const activeGridItemEmoji = activeGridItems[0].dataset.emoji;
-
-            // Check if the clicked grid item matches the active grid item
-            if (emoji === activeGridItemEmoji) {
-                gridItem.classList.add('active');
-                activeGridItems[0].classList.add('matched');
-                const connectionLine = document.createElement('div');
-                connectionLine.classList.add('connection-line', 'vertical');
-                connectionLine.style.top = `${gridItem.offsetTop}px`;
-                connectionLine.style.left = `${gridItem.offsetLeft}px`;
-                connectionLine.style.width = `${gridItem.offsetWidth}px`;
-                connectionLine.style.height = `${gridItem.offsetHeight}px`;
-                connectionLine.style.transform = `rotate(${Math.random() * 360}deg)`;
-                gridContainer.appendChild(connectionLine);
-                setTimeout(() => {
-                    connectionLine.remove();
-                    gridItem.classList.remove('active');
-                    activeGridItems[0].classList.remove('matched');
-                    gridItem.dataset.matched = 'true';
-                    activeGridItems[0].dataset.matched = 'true';
-                    checkForWin();
-                }, 1000);
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 15; j++) {
+                const preyElement = document.getElementById(`prey-${i}-${j}`);
+                preyElement.style.top = `${j * 40}px`;
+                preyElement.style.left = `${i * 40}px`;
+                preyPosition.push([i, j]);
             }
         }
 
-        // Function to check if the game has been won
-        function checkForWin() {
-            const matchedGridItems = gridItems.filter(item => item.dataset.matched === 'true');
-            if (matchedGridItems.length === gridItems.length) {
-                // Game won, show confetti
-                const confetti = document.createElement('div');
-                confetti.classList.add('confetti');
-                confetti.style.backgroundImage = `linear-gradient(to bottom, ${confettiColor} 0%, ${confettiColor} 50%, #fff 50%, #fff 100%)`;
-                confetti.style.backgroundSize = '100% 100px';
-                confetti.style.backgroundRepeat = 'no-repeat';
-                confetti.style.backgroundPosition = 'bottom';
-                gridContainer.appendChild(confetti);
-                confetti.classList.add('show');
-                setTimeout(() => {
-                    confetti.remove();
-                }, 2000);
+        // Sự kiện bắt đầu game
+        startButton.addEventListener('click', () => {
+            startGame();
+        });
+
+        // Sự kiện reset game
+        resetButton.addEventListener('click', () => {
+            resetGame();
+        });
+
+        // Tạo sự kiện click cho từng ô game
+        gameBoard.addEventListener('click', (e) => {
+            const targetElement = e.target;
+            if (targetElement.classList.contains('snake')) {
+                const snakeIndex = snakePosition.indexOf(snakePosition.find((position) => position[0] === parseInt(targetElement.id.split('-')[1]) && position[1] === parseInt(targetElement.id.split('-')[2])));
+                if (snakeIndex !== -1) {
+                    const preyIndex = preyPosition.indexOf(preyPosition.find((position) => position[0] === parseInt(targetElement.id.split('-')[1]) && position[1] === parseInt(targetElement.id.split('-')[2])));
+                    if (preyIndex !== -1) {
+                        score++;
+                        const preyElement = document.getElementById(`prey-${targetElement.id.split('-')[1]}-${targetElement.id.split('-')[2]}`);
+                        preyElement.style.display = 'none';
+                        preyPosition.splice(preyIndex, 1);
+                        snakePosition.push([parseInt(targetElement.id.split('-')[1]), parseInt(targetElement.id.split('-')[2])]);
+                        updateSnakePosition();
+                    }
+                }
+            }
+        });
+
+        // Tạo sự kiện di chuyển rắn
+        setInterval(() => {
+            const snakeHead = snakePosition[snakePosition.length - 1];
+            let newSnakeHead = [snakeHead[0] + (direction === 'right' ? 1 : 0) + (direction === 'left' ? -1 : 0), snakeHead[1] + (direction === 'down' ? 1 : 0) + (direction === 'up' ? -1 : 0)];
+            if (snakePosition.includes(newSnakeHead)) {
+                resetGame();
+            } else if (preyPosition.includes(newSnakeHead)) {
+                const preyIndex = preyPosition.indexOf(newSnakeHead);
+                const preyElement = document.getElementById(`prey-${newSnakeHead[0]}-${newSnakeHead[1]}`);
+                preyElement.style.display = 'none';
+                preyPosition.splice(preyIndex, 1);
+                snakePosition.push(newSnakeHead);
+                updateSnakePosition();
+                score++;
+            } else {
+                snakePosition.push(newSnakeHead);
+                updateSnakePosition();
+            }
+        }, 1000);
+
+        // Cập nhật vị trí rắn
+        function updateSnakePosition() {
+            snakePosition.forEach((position, index) => {
+                const snakeElement = document.getElementById(`snake-${position[0]}-${position[1]}`);
+                snakeElement.style.top = `${position[1] * 40}px`;
+                snakeElement.style.left = `${position[0] * 40}px`;
+            });
+        }
+
+        // Bắt đầu game
+        function startGame() {
+            startButton.style.display = 'none';
+            resetButton.style.display = 'none';
+            snakePosition = [];
+            preyPosition = [];
+            score = 0;
+            updateSnakePosition();
+        }
+
+        // Reset game
+        function resetGame() {
+            startButton.style.display = 'block';
+            resetButton.style.display = 'block';
+            snakePosition = [];
+            preyPosition = [];
+            score = 0;
+            updateSnakePosition();
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 15; j++) {
+                    const preyElement = document.getElementById(`prey-${i}-${j}`);
+                    preyElement.style.display = 'block';
+                }
             }
         }
-
-        // Function to generate confetti
-        function generateConfetti() {
-            const confetti = document.createElement('div');
-            confetti.classList.add('confetti');
-            confetti.style.backgroundImage = `linear-gradient(to bottom, ${confettiColor} 0%, ${confettiColor} 50%, #fff 50%, #fff 100%)`;
-            confetti.style.backgroundSize = '100% 100px';
-            confetti.style.backgroundRepeat = 'no-repeat';
-            confetti.style.backgroundPosition = 'bottom';
-            confetti.style.width = '100px';
-            confetti.style.height = '100px';
-            confetti.style.top = `${Math.random() * (gridContainer.offsetHeight - 100)}px`;
-            confetti.style.left = `${Math.random() * (gridContainer.offsetWidth - 100)}px`;
-            confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-            confetti.style.opacity = '0.5';
-            gridContainer.appendChild(confetti);
-            setTimeout(() => {
-                confetti.remove();
-            }, 2000);
-        }
-
-        // Show confetti when the game is won
-        checkForWin();
     </script>
 </body>
 </html>
