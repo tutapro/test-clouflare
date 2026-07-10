@@ -1,185 +1,224 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Rắn Săn Mồi</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <script src="https://kit.fontawesome.com/your-font-awesome-key.js" crossorigin="anonymous"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            font-family: 'Open Sans', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .game-container {
-            width: 800px;
-            height: 600px;
-            margin: 40px auto;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            background-color: #f7f7f7;
+            background-color: white;
             padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
-        .game-board {
-            display: grid;
-            grid-template-columns: repeat(10, 40px);
-            grid-template-rows: repeat(15, 40px);
-            gap: 5px;
-        }
-        .snake {
-            background-color: #008000;
-            border-radius: 10px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #fff;
-        }
-        .prey {
-            background-color: #ff0000;
-            border-radius: 10px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #fff;
+        canvas {
+            background-color: #111;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <h2 class="text-center text-2xl mb-4">Game Rắn Săn Mồi</h2>
-        <div class="game-board" id="game-board">
-            <!-- Tạo các ô game -->
-            <?php for ($i = 0; $i < 15; $i++) : ?>
-                <?php for ($j = 0; $j < 10; $j++) : ?>
-                    <div class="snake" id="snake-<?php echo $i . '-' . $j; ?>"></div>
-                <?php endfor; ?>
-            <?php endfor; ?>
-            <?php for ($i = 0; $i < 15; $i++) : ?>
-                <?php for ($j = 0; $j < 10; $j++) : ?>
-                    <div class="prey" id="prey-<?php echo $i . '-' . $j; ?>"></div>
-                <?php endfor; ?>
-            <?php endfor; ?>
+    <div class="game-container w-full max-w-lg mx-auto">
+        <h1 class="text-3xl font-bold mb-4 text-gray-800">Rắn Săn Mồi</h1>
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-xl font-semibold text-gray-700">Điểm: <span id="score" class="text-blue-600">0</span></span>
+            <span class="text-xl font-semibold text-gray-700">Kỷ lục: <span id="high-score" class="text-red-600">0</span></span>
         </div>
-        <button class="btn btn-primary" id="start-button">Bắt đầu</button>
-        <button class="btn btn-secondary" id="reset-button">Reset</button>
+        <canvas id="gameCanvas" width="400" height="400" class="mx-auto block"></canvas>
+        <div class="mt-6 flex gap-4 justify-center">
+            <button id="startBtn" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold transition shadow-md">Bắt đầu</button>
+            <button id="resetBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold transition shadow-md">Chơi lại</button>
+        </div>
     </div>
 
     <script>
-        const gameBoard = document.getElementById('game-board');
-        const startButton = document.getElementById('start-button');
-        const resetButton = document.getElementById('reset-button');
-        let snakePosition = [];
-        let preyPosition = [];
-        let direction = 'right';
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+        const highScoreElement = document.getElementById("high-score");
+        const startBtn = document.getElementById("startBtn");
+        const resetBtn = document.getElementById("resetBtn");
+
+        const box = 20;
+        let snake = [];
+        let food = {};
+        let d;
         let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let gameLoop;
+        let isPlaying = false;
 
-        // Tạo vị trí rắn và thức ăn
-        for (let i = 0; i < 10; i++) {
-            for (let j = 0; j < 15; j++) {
-                const snakeElement = document.getElementById(`snake-${i}-${j}`);
-                snakeElement.style.top = `${j * 40}px`;
-                snakeElement.style.left = `${i * 40}px`;
-                snakePosition.push([i, j]);
-            }
-        }
-        for (let i = 0; i < 10; i++) {
-            for (let j = 0; j < 15; j++) {
-                const preyElement = document.getElementById(`prey-${i}-${j}`);
-                preyElement.style.top = `${j * 40}px`;
-                preyElement.style.left = `${i * 40}px`;
-                preyPosition.push([i, j]);
-            }
+        highScoreElement.innerText = highScore;
+
+        function initGame() {
+            snake = [];
+            snake[0] = { x: 9 * box, y: 10 * box };
+            score = 0;
+            d = null;
+            scoreElement.innerText = score;
+            spawnFood();
         }
 
-        // Sự kiện bắt đầu game
-        startButton.addEventListener('click', () => {
-            startGame();
-        });
-
-        // Sự kiện reset game
-        resetButton.addEventListener('click', () => {
-            resetGame();
-        });
-
-        // Tạo sự kiện click cho từng ô game
-        gameBoard.addEventListener('click', (e) => {
-            const targetElement = e.target;
-            if (targetElement.classList.contains('snake')) {
-                const snakeIndex = snakePosition.indexOf(snakePosition.find((position) => position[0] === parseInt(targetElement.id.split('-')[1]) && position[1] === parseInt(targetElement.id.split('-')[2])));
-                if (snakeIndex !== -1) {
-                    const preyIndex = preyPosition.indexOf(preyPosition.find((position) => position[0] === parseInt(targetElement.id.split('-')[1]) && position[1] === parseInt(targetElement.id.split('-')[2])));
-                    if (preyIndex !== -1) {
-                        score++;
-                        const preyElement = document.getElementById(`prey-${targetElement.id.split('-')[1]}-${targetElement.id.split('-')[2]}`);
-                        preyElement.style.display = 'none';
-                        preyPosition.splice(preyIndex, 1);
-                        snakePosition.push([parseInt(targetElement.id.split('-')[1]), parseInt(targetElement.id.split('-')[2])]);
-                        updateSnakePosition();
-                    }
+        function spawnFood() {
+            food = {
+                x: Math.floor(Math.random() * 20) * box,
+                y: Math.floor(Math.random() * 20) * box
+            };
+            // Ensure food doesn't spawn on snake
+            for (let i = 0; i < snake.length; i++) {
+                if (food.x === snake[i].x && food.y === snake[i].y) {
+                    spawnFood();
+                    break;
                 }
             }
-        });
+        }
 
-        // Tạo sự kiện di chuyển rắn
-        setInterval(() => {
-            const snakeHead = snakePosition[snakePosition.length - 1];
-            let newSnakeHead = [snakeHead[0] + (direction === 'right' ? 1 : 0) + (direction === 'left' ? -1 : 0), snakeHead[1] + (direction === 'down' ? 1 : 0) + (direction === 'up' ? -1 : 0)];
-            if (snakePosition.includes(newSnakeHead)) {
-                resetGame();
-            } else if (preyPosition.includes(newSnakeHead)) {
-                const preyIndex = preyPosition.indexOf(newSnakeHead);
-                const preyElement = document.getElementById(`prey-${newSnakeHead[0]}-${newSnakeHead[1]}`);
-                preyElement.style.display = 'none';
-                preyPosition.splice(preyIndex, 1);
-                snakePosition.push(newSnakeHead);
-                updateSnakePosition();
+        document.addEventListener("keydown", direction);
+
+        function direction(event) {
+            let key = event.keyCode;
+            if (key == 37 && d != "RIGHT") {
+                d = "LEFT";
+                event.preventDefault();
+            } else if (key == 38 && d != "DOWN") {
+                d = "UP";
+                event.preventDefault();
+            } else if (key == 39 && d != "LEFT") {
+                d = "RIGHT";
+                event.preventDefault();
+            } else if (key == 40 && d != "UP") {
+                d = "DOWN";
+                event.preventDefault();
+            }
+        }
+
+        function collision(head, array) {
+            for (let i = 0; i < array.length; i++) {
+                if (head.x == array[i].x && head.y == array[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function draw() {
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i == 0) ? "#4ade80" : "#22c55e"; // Lighter green for head
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeStyle = "#000";
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = "#ef4444"; // Red for food
+            ctx.fillRect(food.x, food.y, box, box);
+
+            if (!d) return; // Don't move until key pressed
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if (d == "LEFT") snakeX -= box;
+            if (d == "UP") snakeY -= box;
+            if (d == "RIGHT") snakeX += box;
+            if (d == "DOWN") snakeY += box;
+
+            if (snakeX == food.x && snakeY == food.y) {
                 score++;
+                scoreElement.innerText = score;
+                spawnFood();
             } else {
-                snakePosition.push(newSnakeHead);
-                updateSnakePosition();
+                snake.pop();
             }
-        }, 1000);
 
-        // Cập nhật vị trí rắn
-        function updateSnakePosition() {
-            snakePosition.forEach((position, index) => {
-                const snakeElement = document.getElementById(`snake-${position[0]}-${position[1]}`);
-                snakeElement.style.top = `${position[1] * 40}px`;
-                snakeElement.style.left = `${position[0] * 40}px`;
-            });
-        }
+            let newHead = {
+                x: snakeX,
+                y: snakeY
+            };
 
-        // Bắt đầu game
-        function startGame() {
-            startButton.style.display = 'none';
-            resetButton.style.display = 'none';
-            snakePosition = [];
-            preyPosition = [];
-            score = 0;
-            updateSnakePosition();
-        }
+            if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                clearInterval(gameLoop);
+                isPlaying = false;
+                ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "white";
+                ctx.font = "30px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
 
-        // Reset game
-        function resetGame() {
-            startButton.style.display = 'block';
-            resetButton.style.display = 'block';
-            snakePosition = [];
-            preyPosition = [];
-            score = 0;
-            updateSnakePosition();
-            for (let i = 0; i < 10; i++) {
-                for (let j = 0; j < 15; j++) {
-                    const preyElement = document.getElementById(`prey-${i}-${j}`);
-                    preyElement.style.display = 'block';
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('snakeHighScore', highScore);
+                    highScoreElement.innerText = highScore;
                 }
+
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                return;
             }
+
+            snake.unshift(newHead);
         }
+
+        function startGame() {
+            if (isPlaying) return;
+            initGame();
+            isPlaying = true;
+            startBtn.disabled = true;
+            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            if (gameLoop) clearInterval(gameLoop);
+            gameLoop = setInterval(draw, 100);
+        }
+
+        startBtn.addEventListener("click", startGame);
+
+        resetBtn.addEventListener("click", () => {
+            if (gameLoop) clearInterval(gameLoop);
+            isPlaying = false;
+            startBtn.disabled = false;
+            startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            initGame();
+            ctx.fillStyle = "#111";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#4ade80";
+            ctx.fillRect(snake[0].x, snake[0].y, box, box);
+            ctx.strokeStyle = "#000";
+            ctx.strokeRect(snake[0].x, snake[0].y, box, box);
+
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Nhấn Bắt đầu để chơi", canvas.width / 2, canvas.height / 2 + 50);
+        });
+
+        // Initial draw
+        initGame();
+        ctx.fillStyle = "#111";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#4ade80";
+        ctx.fillRect(snake[0].x, snake[0].y, box, box);
+        ctx.strokeStyle = "#000";
+        ctx.strokeRect(snake[0].x, snake[0].y, box, box);
+
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Nhấn Bắt đầu để chơi", canvas.width / 2, canvas.height / 2 + 50);
+
     </script>
 </body>
 </html>
