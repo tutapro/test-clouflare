@@ -1,173 +1,448 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flappy Bird</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        body {
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .card:hover {
-            transform: scale(1.05);
-        }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
-        }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+        #game-container {
+            aspect-ratio: 9 / 16;
+            max-height: 100vh;
+            max-width: 100vw;
+            margin: 0 auto;
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
+<body class="bg-gray-900 flex items-center justify-center h-screen w-screen overflow-hidden m-0 p-0">
+    <div id="game-container" class="relative bg-gradient-to-b from-blue-400 to-blue-200 w-full h-full sm:rounded-lg sm:shadow-2xl overflow-hidden">
+        <canvas id="gameCanvas" class="block"></canvas>
+
+        <!-- UI Overlay -->
+        <div id="ui-layer" class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center z-10">
+
+            <!-- Start Screen -->
+            <div id="start-screen" class="pointer-events-auto flex flex-col items-center p-8 bg-white/90 rounded-2xl backdrop-blur-md shadow-2xl text-center transition-all duration-300 transform scale-100">
+                <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">FLAPPY</h1>
+                <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-orange-500 mb-6 drop-shadow-sm">BIRD</h1>
+                <p class="text-lg text-gray-700 mb-8 font-semibold">Chạm màn hình hoặc<br>nhấn Space để nhảy</p>
+                <button id="start-btn" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-10 rounded-full text-xl shadow-lg transform transition hover:scale-105 active:scale-95 focus:outline-none ring-4 ring-blue-300 ring-opacity-50">
+                    Chơi Ngay
+                </button>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="game-over-screen" class="hidden pointer-events-auto flex flex-col items-center p-8 bg-white/95 rounded-2xl backdrop-blur-md shadow-2xl text-center transition-all duration-300">
+                <h2 class="text-4xl font-black text-red-500 mb-4 drop-shadow-md tracking-wide">Thua Cuộc!</h2>
+                <div class="text-xl text-gray-800 mb-2 font-semibold bg-gray-100 w-full py-2 rounded-lg">Điểm số: <span id="final-score" class="text-blue-600 text-3xl font-bold block mt-1">0</span></div>
+                <div class="text-lg text-gray-600 mb-8 font-medium">Kỷ lục: <span id="best-score" class="text-green-600 font-bold">0</span></div>
+                <button id="restart-btn" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-10 rounded-full text-xl shadow-lg transform transition hover:scale-105 active:scale-95 focus:outline-none ring-4 ring-green-300 ring-opacity-50">
+                    Chơi Lại
+                </button>
+            </div>
+
+        </div>
+
+        <!-- HUD -->
+        <div id="hud" class="hidden absolute top-0 left-0 w-full p-4 flex justify-between items-start pointer-events-none z-10">
+            <div class="bg-black/40 text-white px-5 py-2 rounded-xl backdrop-blur-md font-bold text-xl shadow-sm border border-white/10">
+                Điểm: <span id="score" class="text-yellow-400">0</span>
+            </div>
+            <div class="bg-black/40 text-white px-5 py-2 rounded-xl backdrop-blur-md font-bold text-xl shadow-sm border border-white/10">
+                Cấp: <span id="level" class="text-green-400">1</span>
             </div>
         </div>
+
+        <!-- Level Up Notification -->
+        <div id="notification" class="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-8 py-4 rounded-full font-black text-2xl shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-20 scale-110">
+            Cấp Độ 2!
+        </div>
     </div>
+
     <script>
-        let selectedCards = [];
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const hud = document.getElementById('hud');
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const finalScoreEl = document.getElementById('final-score');
+        const bestScoreEl = document.getElementById('best-score');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const notification = document.getElementById('notification');
+
+        // Logical internal resolution for consistent gameplay on all screens
+        const LOGICAL_WIDTH = 360;
+        const LOGICAL_HEIGHT = 640;
+        canvas.width = LOGICAL_WIDTH;
+        canvas.height = LOGICAL_HEIGHT;
+
+        // Auto resize display to fit container perfectly
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            const rect = container.getBoundingClientRect();
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game State Variables
+        let frames = 0;
         let score = 0;
+        let bestScore = localStorage.getItem('flappyBestScore_vn') || 0;
+        let gameState = 'START'; // START, PLAYING, GAMEOVER
+        let level = 1;
+        let animationId;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
+        const bird = {
+            x: 80,
+            y: 200,
+            radius: 14,
+            velocity: 0,
+            gravity: 0.35,
+            jump: -7,
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Tilt bird based on velocity
+                let rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity * 0.1)));
+                ctx.rotate(rotation);
+
+                // Body
+                ctx.fillStyle = '#FCD34D'; // Yellow-300
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#B45309';
+                ctx.stroke();
+
+                // Eye whites
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(6, -6, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Pupil
+                ctx.fillStyle = '#111827';
+                ctx.beginPath();
+                ctx.arc(8, -6, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Beak
+                ctx.fillStyle = '#F59E0B'; // Amber-500
+                ctx.beginPath();
+                ctx.moveTo(10, 2);
+                ctx.lineTo(22, 6);
+                ctx.lineTo(10, 10);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Wing
+                ctx.fillStyle = '#FDE68A'; // Yellow-200
+                ctx.beginPath();
+                ctx.ellipse(-6, 2, 8, 5, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+            },
+            update() {
+                this.velocity += this.gravity;
+                this.y += this.velocity;
+
+                // Floor collision
+                if (this.y + this.radius >= LOGICAL_HEIGHT - bg.groundHeight) {
+                    this.y = LOGICAL_HEIGHT - bg.groundHeight - this.radius;
+                    setGameOver();
+                }
+
+                // Ceiling collision
+                if (this.y - this.radius <= 0) {
+                    this.y = this.radius;
+                    this.velocity = 0;
+                }
+            },
+            flap() {
+                this.velocity = this.jump;
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+        };
+
+        const bg = {
+            groundHeight: 112,
+            draw() {
+                // Main dirt
+                ctx.fillStyle = '#D97706'; // Amber-600
+                ctx.fillRect(0, LOGICAL_HEIGHT - this.groundHeight, LOGICAL_WIDTH, this.groundHeight);
+
+                // Grass top
+                ctx.fillStyle = '#22C55E'; // Green-500
+                ctx.fillRect(0, LOGICAL_HEIGHT - this.groundHeight, LOGICAL_WIDTH, 16);
+
+                // Grass border
+                ctx.fillStyle = '#16A34A'; // Green-600
+                ctx.fillRect(0, LOGICAL_HEIGHT - this.groundHeight + 16, LOGICAL_WIDTH, 4);
+                ctx.fillStyle = '#14532D'; // Outline
+                ctx.fillRect(0, LOGICAL_HEIGHT - this.groundHeight, LOGICAL_WIDTH, 2);
+            }
+        };
+
+        const pipes = {
+            items: [],
+            width: 60,
+            draw() {
+                for (let i = 0; i < this.items.length; i++) {
+                    let p = this.items[i];
+
+                    // Gradient pipe body
+                    let grad = ctx.createLinearGradient(p.x, 0, p.x + this.width, 0);
+                    grad.addColorStop(0, '#4ADE80');
+                    grad.addColorStop(0.5, '#22C55E');
+                    grad.addColorStop(1, '#16A34A');
+
+                    ctx.fillStyle = grad;
+
+                    // Top pipe body
+                    ctx.fillRect(p.x, 0, this.width, p.top);
+                    // Top pipe cap
+                    ctx.fillRect(p.x - 4, p.top - 24, this.width + 8, 24);
+
+                    // Bottom pipe body
+                    ctx.fillRect(p.x, p.top + p.gap, this.width, LOGICAL_HEIGHT - bg.groundHeight - (p.top + p.gap));
+                    // Bottom pipe cap
+                    ctx.fillRect(p.x - 4, p.top + p.gap, this.width + 8, 24);
+
+                    // Outlines
+                    ctx.strokeStyle = '#064E3B';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(p.x, -2, this.width, p.top + 2);
+                    ctx.strokeRect(p.x - 4, p.top - 24, this.width + 8, 24);
+
+                    let bottomHeight = LOGICAL_HEIGHT - bg.groundHeight - (p.top + p.gap);
+                    ctx.strokeRect(p.x, p.top + p.gap, this.width, bottomHeight + 2);
+                    ctx.strokeRect(p.x - 4, p.top + p.gap, this.width + 8, 24);
+                }
+            },
+            update() {
+                // Difficulty settings logic
+                let speed = 2.5;
+                let gap = 170;
+                let spawnRate = 110;
+
+                if (level === 2) {
+                    speed = 3.5;
+                    gap = 145;
+                    spawnRate = 90;
+                } else if (level === 3) {
+                    speed = 4.5;
+                    gap = 125;
+                    spawnRate = 75;
+                }
+
+                // Spawning pipes
+                if (frames % spawnRate === 0) {
+                    let minTop = 60;
+                    let maxTop = LOGICAL_HEIGHT - bg.groundHeight - gap - 60;
+                    let top = Math.floor(Math.random() * (maxTop - minTop + 1)) + minTop;
+
+                    this.items.push({
+                        x: LOGICAL_WIDTH,
+                        top: top,
+                        gap: gap,
+                        passed: false
+                    });
+                }
+
+                for (let i = 0; i < this.items.length; i++) {
+                    let p = this.items[i];
+                    p.x -= speed;
+
+                    // Collision detection (with a tiny forgiveness margin of 2px)
+                    const hitRadius = bird.radius - 2;
+                    if (bird.x + hitRadius > p.x && bird.x - hitRadius < p.x + this.width) {
+                        if (bird.y - hitRadius < p.top || bird.y + hitRadius > p.top + p.gap) {
+                            setGameOver();
+                        }
                     }
-                }, 1000);
+
+                    // Passing pipe and scoring
+                    if (p.x + this.width < bird.x && !p.passed) {
+                        score++;
+                        p.passed = true;
+                        updateScore();
+                    }
+
+                    // Remove if out of screen
+                    if (p.x + this.width < -10) {
+                        this.items.shift();
+                        i--;
+                    }
+                }
+            },
+            reset() {
+                this.items = [];
+            }
+        };
+
+        function drawBackground() {
+            // Clear canvas (shows CSS gradient underneath)
+            ctx.clearRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+            // Draw some decorative background clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(80, 200, 40, 0, Math.PI * 2);
+            ctx.arc(130, 200, 50, 0, Math.PI * 2);
+            ctx.arc(180, 200, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(280, 100, 30, 0, Math.PI * 2);
+            ctx.arc(320, 100, 40, 0, Math.PI * 2);
+            ctx.arc(360, 100, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cityscape silhouette
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.fillRect(50, LOGICAL_HEIGHT - bg.groundHeight - 80, 60, 80);
+            ctx.fillRect(130, LOGICAL_HEIGHT - bg.groundHeight - 120, 50, 120);
+            ctx.fillRect(200, LOGICAL_HEIGHT - bg.groundHeight - 60, 70, 60);
+            ctx.fillRect(290, LOGICAL_HEIGHT - bg.groundHeight - 100, 60, 100);
+        }
+
+        function updateScore() {
+            scoreEl.innerText = score;
+
+            // Level Progression
+            let leveledUp = false;
+            if (score === 10 && level === 1) {
+                level = 2;
+                leveledUp = true;
+            } else if (score === 20 && level === 2) {
+                level = 3;
+                leveledUp = true;
+            }
+
+            if (leveledUp) {
+                levelEl.innerText = level;
+                showNotification(`Cấp Độ ${level}!`);
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
-            }
-        }
-
-        setInterval(() => {
-            checkWin();
-        }, 100);
-
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
+        function showNotification(text) {
+            notification.innerText = text;
+            notification.classList.remove('opacity-0');
+            notification.classList.add('opacity-100');
             setTimeout(() => {
-                particle.style.display = 'none';
+                notification.classList.remove('opacity-100');
+                notification.classList.add('opacity-0');
             }, 2000);
-        }, 100);
+        }
+
+        function setGameOver() {
+            gameState = 'GAMEOVER';
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('flappyBestScore_vn', bestScore);
+            }
+            finalScoreEl.innerText = score;
+            bestScoreEl.innerText = bestScore;
+
+            hud.classList.add('hidden');
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function resetGame() {
+            bird.y = 250;
+            bird.velocity = 0;
+            pipes.reset();
+            score = 0;
+            level = 1;
+            frames = 0;
+            scoreEl.innerText = score;
+            levelEl.innerText = level;
+            gameState = 'PLAYING';
+
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            hud.classList.remove('hidden');
+
+            bird.flap();
+
+            if (animationId) cancelAnimationFrame(animationId);
+            loop();
+        }
+
+        function loop() {
+            if (gameState !== 'PLAYING') return;
+
+            drawBackground();
+            pipes.draw();
+            bg.draw();
+            bird.draw();
+
+            bird.update();
+            pipes.update();
+
+            frames++;
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function drawInitial() {
+            drawBackground();
+            bg.draw();
+            bird.draw();
+        }
+
+        // --- Inputs ---
+        function handleFlap() {
+            if (gameState === 'PLAYING') {
+                bird.flap();
+            }
+        }
+
+        // Keyboard support (Spacebar)
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleFlap();
+            }
+        });
+
+        // Mouse / Touch support
+        const gameContainer = document.getElementById('game-container');
+
+        gameContainer.addEventListener('mousedown', (e) => {
+             if(e.target.tagName !== 'BUTTON') {
+                 handleFlap();
+             }
+        });
+
+        gameContainer.addEventListener('touchstart', (e) => {
+             if(e.target.tagName !== 'BUTTON') {
+                 e.preventDefault(); // prevents double-tap zoom or scrolling
+                 handleFlap();
+             }
+        }, {passive: false});
+
+        startBtn.addEventListener('click', resetGame);
+        restartBtn.addEventListener('click', resetGame);
+
+        // Render initial screen
+        drawInitial();
     </script>
 </body>
 </html>
