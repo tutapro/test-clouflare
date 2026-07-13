@@ -1,173 +1,397 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2048</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Clear+Sans:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        body {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            touch-action: none;
+            overflow: hidden;
         }
-        .card:hover {
-            transform: scale(1.05);
+
+        .game-container {
+            background-color: #bbada0;
+            border-radius: 6px;
+            position: relative;
+            padding: 3%;
+            box-sizing: border-box;
+            touch-action: none;
         }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
+
+        .grid-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
+            grid-gap: 3%;
+            width: 100%;
+            height: 100%;
         }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
+
+        .grid-cell {
+            background-color: rgba(238, 228, 218, 0.35);
+            border-radius: 3px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .tile-container {
+            position: absolute;
+            top: 3%; left: 3%; right: 3%; bottom: 3%;
+            pointer-events: none;
+        }
+
+        .tile {
+            position: absolute;
             display: flex;
             justify-content: center;
             align-items: center;
+            font-weight: bold;
+            border-radius: 3px;
+            transition: transform 150ms ease-in-out, opacity 100ms ease-in-out;
+            font-size: 35px;
+            z-index: 10;
         }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+
+        .tile-new {
+            animation: appear 200ms ease 100ms;
+            animation-fill-mode: backwards;
+        }
+
+        .tile-merged {
+            animation: pop 200ms ease 100ms;
+            animation-fill-mode: backwards;
+        }
+
+        @keyframes appear {
+            0% { opacity: 0; transform: scale(0); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Colors & Font Sizes */
+        .tile-2 { background: #eee4da; color: #776e65; }
+        .tile-4 { background: #ede0c8; color: #776e65; }
+        .tile-8 { background: #f2b179; color: #f9f6f2; }
+        .tile-16 { background: #f59563; color: #f9f6f2; }
+        .tile-32 { background: #f67c5f; color: #f9f6f2; }
+        .tile-64 { background: #f65e3b; color: #f9f6f2; }
+        .tile-128 { background: #edcf72; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.2381), inset 0 0 0 1px rgba(255, 255, 255, 0.14286); font-size: 30px; }
+        .tile-256 { background: #edcc61; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.31746), inset 0 0 0 1px rgba(255, 255, 255, 0.19048); font-size: 30px; }
+        .tile-512 { background: #edc850; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.39683), inset 0 0 0 1px rgba(255, 255, 255, 0.2381); font-size: 30px; }
+        .tile-1024 { background: #edc53f; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619), inset 0 0 0 1px rgba(255, 255, 255, 0.28571); font-size: 24px; }
+        .tile-2048 { background: #edc22e; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556), inset 0 0 0 1px rgba(255, 255, 255, 0.33333); font-size: 24px; }
+        .tile-super { background: #3c3a32; color: #f9f6f2; font-size: 24px; }
+
+        @media (max-width: 480px) {
+            .tile { font-size: 28px; }
+            .tile-128, .tile-256, .tile-512 { font-size: 24px; }
+            .tile-1024, .tile-2048, .tile-super { font-size: 18px; }
+        }
+
+        .game-message {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: rgba(238, 228, 218, 0.73);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            border-radius: 6px;
+        }
+
+        .game-message.game-over, .game-message.game-won {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .game-message p {
+            font-size: 60px;
+            font-weight: bold;
+            color: #776e65;
+            margin: 0 0 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 500px) {
+            .game-message p { font-size: 40px; }
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen text-gray-800 flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-[500px] w-full flex flex-col gap-6">
+
+        <div class="flex justify-between items-start">
+            <h1 class="text-6xl font-bold text-white drop-shadow-lg leading-none">2048</h1>
+            <div class="flex gap-2">
+                <div class="bg-[#bbada0] rounded-md px-4 py-1.5 flex flex-col items-center justify-center text-white min-w-[70px]">
+                    <span class="text-[13px] uppercase font-bold text-[#eee4da]">Điểm</span>
+                    <span class="text-xl font-bold leading-tight" id="score">0</span>
                 </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+                <div class="bg-[#bbada0] rounded-md px-4 py-1.5 flex flex-col items-center justify-center text-white min-w-[70px]">
+                    <span class="text-[13px] uppercase font-bold text-[#eee4da]">Kỷ lục</span>
+                    <span class="text-xl font-bold leading-tight" id="best-score">0</span>
                 </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center text-white">
+            <p class="text-[17px] font-medium drop-shadow-md">Nối các số để tạo ra <strong>2048!</strong></p>
+            <button onclick="restartGame()" class="bg-[#8f7a66] hover:bg-[#9f8b77] text-white font-bold py-2 px-5 rounded-md transition duration-150 shadow-md">
+                Chơi lại
+            </button>
+        </div>
+
+        <div class="game-container shadow-2xl w-full aspect-square" id="game-container">
+            <div class="grid-container">
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+            <div class="tile-container" id="tile-container"></div>
+
+            <div class="game-message" id="game-message">
+                <p id="message-text">Trò chơi kết thúc!</p>
+                <div class="flex gap-4">
+                    <button onclick="restartGame()" class="bg-[#8f7a66] hover:bg-[#9f8b77] text-white font-bold py-3 px-6 rounded-md text-xl">Thử lại</button>
                 </div>
             </div>
         </div>
     </div>
+
     <script>
-        let selectedCards = [];
+        const size = 4;
+        let board = [];
         let score = 0;
+        let bestScore = localStorage.getItem('bestScore') || 0;
+        let won = false;
+        let over = false;
+        let hasMoved = false;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
+        document.getElementById('best-score').innerText = bestScore;
+
+        const gapPercent = 3;
+        const cellSizePercent = (100 - gapPercent * 3) / 4;
+        const translatePercent = (cellSizePercent + gapPercent) / cellSizePercent * 100;
+
+        function initBoard() {
+            board = Array(size).fill().map(() => Array(size).fill(0));
+            score = 0;
+            won = false;
+            over = false;
+            document.getElementById('score').innerText = score;
+            document.getElementById('game-message').className = 'game-message';
+            document.getElementById('tile-container').innerHTML = '';
+            addRandomTile();
+            addRandomTile();
+            renderBoard();
+        }
+
+        function restartGame() {
+            initBoard();
+        }
+
+        function getEmptyCells() {
+            const emptyCells = [];
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (board[r][c] === 0) emptyCells.push({r, c});
+                }
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+            return emptyCells;
+        }
+
+        function addRandomTile() {
+            const emptyCells = getEmptyCells();
+            if (emptyCells.length > 0) {
+                const {r, c} = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                board[r][c] = Math.random() < 0.9 ? 2 : 4;
+            }
+        }
+
+        function getTileColorClass(value) {
+            if (value <= 2048) return `tile-${value}`;
+            return 'tile-super';
+        }
+
+        function renderBoard() {
+            const container = document.getElementById('tile-container');
+
+            // Collect currently rendered tiles
+            const existingTiles = Array.from(container.children);
+            existingTiles.forEach(t => t.markedForDeletion = true);
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (board[r][c] !== 0) {
+                        const val = board[r][c];
+                        const tileId = `tile-${r}-${c}`;
+                        let tile = document.getElementById(tileId);
+
+                        if (!tile) {
+                            tile = document.createElement('div');
+                            tile.id = tileId;
+                            tile.className = `tile ${getTileColorClass(val)} tile-new`;
+                            tile.style.width = `${cellSizePercent}%`;
+                            tile.style.height = `${cellSizePercent}%`;
+                            container.appendChild(tile);
+                        } else {
+                            tile.className = `tile ${getTileColorClass(val)}`;
+                            tile.markedForDeletion = false;
+                        }
+
+                        // Use inline positioning instead of transform scale/translate conflicts
+                        tile.style.top = `calc(${r} * ${translatePercent}%)`;
+                        tile.style.left = `calc(${c} * ${translatePercent}%)`;
+                        // Remove transform translation
+                        tile.style.transform = `none`;
+
+                        tile.innerText = val;
                     }
-                }, 1000);
+                }
+            }
+
+            // Remove tiles that are no longer on the board
+            existingTiles.forEach(t => {
+                if (t.markedForDeletion) {
+                    container.removeChild(t);
+                }
+            });
+
+            document.getElementById('score').innerText = score;
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('bestScore', bestScore);
+                document.getElementById('best-score').innerText = bestScore;
+            }
+
+            if (over) {
+                document.getElementById('message-text').innerText = 'Trò chơi kết thúc!';
+                document.getElementById('game-message').classList.add('game-over');
+            } else if (won) {
+                document.getElementById('message-text').innerText = 'Bạn thắng!';
+                document.getElementById('game-message').classList.add('game-won');
+                won = false;
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        function move(direction) {
+            if (over) return;
+            hasMoved = false;
+
+            let tempBoard = rotateBoard(board, direction);
+
+            for (let r = 0; r < size; r++) {
+                let row = tempBoard[r].filter(val => val !== 0);
+                for (let c = 0; c < row.length - 1; c++) {
+                    if (row[c] === row[c+1]) {
+                        row[c] *= 2;
+                        score += row[c];
+                        if (row[c] === 2048 && !document.getElementById('game-message').classList.contains('game-won')) {
+                            won = true;
+                        }
+                        row.splice(c + 1, 1);
+                    }
+                }
+                while (row.length < size) {
+                    row.push(0);
+                }
+                if (row.join(',') !== tempBoard[r].join(',')) {
+                    hasMoved = true;
+                }
+                tempBoard[r] = row;
+            }
+
+            board = rotateBoard(tempBoard, (4 - direction) % 4);
+
+            if (hasMoved) {
+                addRandomTile();
+                checkGameOver();
+                renderBoard();
             }
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        function rotateBoard(matrix, times) {
+            let res = JSON.parse(JSON.stringify(matrix));
+            for (let t = 0; t < times; t++) {
+                let temp = Array(size).fill().map(() => Array(size).fill(0));
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        temp[c][size - 1 - r] = res[r][c];
+                    }
+                }
+                res = temp;
+            }
+            return res;
+        }
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+        function checkGameOver() {
+            if (getEmptyCells().length > 0) return;
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (r < size - 1 && board[r][c] === board[r+1][c]) return;
+                    if (c < size - 1 && board[r][c] === board[r][c+1]) return;
+                }
+            }
+            over = true;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+            if (e.key === 'ArrowLeft') move(0);
+            else if (e.key === 'ArrowUp') move(3);
+            else if (e.key === 'ArrowRight') move(2);
+            else if (e.key === 'ArrowDown') move(1);
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.getElementById('game-container').addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            // Removed e.preventDefault() so buttons inside can be clicked.
+        }, {passive: false});
+
+        document.getElementById('game-container').addEventListener('touchend', (e) => {
+            if (over) return;
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
+
+            if (Math.max(absDx, absDy) > 30) {
+                if (absDx > absDy) {
+                    if (dx > 0) move(2);
+                    else move(0);
+                } else {
+                    if (dy > 0) move(1);
+                    else move(3);
+                }
+            }
+            e.preventDefault();
+        }, {passive: false});
+
+        initBoard();
     </script>
 </body>
 </html>
