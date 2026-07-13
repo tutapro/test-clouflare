@@ -1,173 +1,885 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Đột Kích Web 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        :root {
+            --primary: #ef4444; /* red-500 */
         }
-        .card:hover {
-            transform: scale(1.05);
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            background-color: #000;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
-        }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .confetti {
-            position: fixed;
+
+        #game-canvas {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #f7f7f7;
+            z-index: 1;
+            display: block;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .pointer-events-auto {
+            pointer-events: auto;
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .animate-pulse-fast {
+            animation: pulse 0.3s ease-in-out;
+        }
+
+        @keyframes damage {
+            0% { background-color: rgba(255, 0, 0, 0); }
+            50% { background-color: rgba(255, 0, 0, 0.3); }
+            100% { background-color: rgba(255, 0, 0, 0); }
+        }
+        .damage-flash {
+            animation: damage 0.3s ease-out;
+        }
+
+        /* Crosshair */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 11;
             display: none;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(0, 255, 0, 0.8);
+        }
+        #crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; }
+        #crosshair::after { top: 0; left: 9px; width: 2px; height: 20px; }
+
+        .hit-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+        .hit-marker::before, .hit-marker::after {
+            content: '';
+            position: absolute;
+            background: #ff0000;
+        }
+        .hit-marker::before { top: 9px; left: -5px; width: 30px; height: 2px; }
+        .hit-marker::after { top: -5px; left: 9px; width: 2px; height: 30px; }
+
+        /* Mobile Controls */
+        #joystick-zone {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: none;
+            z-index: 20;
+        }
+        #joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        #shoot-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.5);
+            border: 2px solid rgba(239, 68, 68, 0.8);
+            display: none;
+            z-index: 20;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        #shoot-btn:active {
+            background: rgba(239, 68, 68, 0.8);
+            transform: scale(0.9);
+        }
+
+        #touch-look-zone {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            z-index: 15;
+            display: none;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            transition: opacity 0.3s;
+        }
+        .hidden { display: none !important; }
+
+        #damage-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 12;
+        }
+
+        /* Gradient Background for Menu */
+        .menu-bg {
+            background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(0,0,0,0.9) 100%);
         }
     </style>
 </head>
 <body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+    <!-- WebGL Canvas -->
+    <canvas id="game-canvas"></canvas>
+    <div id="damage-overlay"></div>
+
+    <!-- UI Layer -->
+    <div id="ui-layer">
+
+        <!-- Main Menu -->
+        <div id="menu-screen" class="screen menu-bg pointer-events-auto">
+            <div class="glass p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4">
+                <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 mb-2 drop-shadow-lg">ĐỘT KÍCH 3D</h1>
+                <p class="text-gray-300 mb-6 text-sm">Sinh tồn trong không gian ảo</p>
+
+                <div class="mb-6 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                    <p class="text-gray-400 text-xs uppercase">Điểm Cao Nhất</p>
+                    <p id="high-score-display" class="text-2xl font-bold text-white">0</p>
                 </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+                <button id="start-btn" class="btn w-full py-3 px-6 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold text-lg shadow-lg shadow-red-500/30">
+                    CHƠI NGAY
+                </button>
+
+                <div class="mt-6 text-left text-gray-400 text-xs">
+                    <p class="font-semibold text-gray-300 mb-1">Hướng dẫn:</p>
+                    <p>• Desktop: Chuột để nhìn, Click để bắn, WASD để di chuyển.</p>
+                    <p>• Mobile: Joystick trái di chuyển, vuốt phải để nhìn, nút đỏ để bắn.</p>
                 </div>
             </div>
         </div>
+
+        <!-- Game HUD -->
+        <div id="hud-screen" class="screen hidden pointer-events-none" style="justify-content: space-between; padding: 20px;">
+            <!-- Top Bar -->
+            <div class="w-full flex justify-between items-start">
+                <div class="glass px-4 py-2 rounded-lg flex flex-col">
+                    <span class="text-gray-400 text-xs uppercase">Điểm</span>
+                    <span id="score-display" class="text-2xl font-bold text-white leading-none">0</span>
+                </div>
+
+                <div class="glass px-4 py-2 rounded-lg w-40">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-gray-400 text-xs uppercase">Máu</span>
+                        <span id="hp-text" class="text-xs font-bold text-white">100</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                        <div id="hp-bar" class="bg-red-600 h-2.5 rounded-full" style="width: 100%; transition: width 0.2s;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Bar (Ammo, etc - placeholder for now) -->
+            <div class="w-full flex justify-end items-end pb-10">
+                <div class="glass px-4 py-2 rounded-lg text-right">
+                    <span class="text-gray-400 text-xs uppercase">Đạn</span>
+                    <div class="text-2xl font-bold text-white">∞</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen hidden menu-bg pointer-events-auto">
+            <div class="glass p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4 border-red-500/30">
+                <h2 class="text-4xl font-extrabold text-red-500 mb-2">TỬ TRẬN</h2>
+
+                <div class="my-6 space-y-4">
+                    <div class="p-4 bg-gray-900/50 rounded-lg">
+                        <p class="text-gray-400 text-sm">Điểm của bạn</p>
+                        <p id="final-score" class="text-4xl font-bold text-white">0</p>
+                    </div>
+                </div>
+
+                <button id="restart-btn" class="btn w-full py-3 px-6 bg-white hover:bg-gray-200 text-gray-900 rounded-xl font-bold text-lg shadow-lg">
+                    CHƠI LẠI
+                </button>
+                <button id="menu-btn" class="mt-3 w-full py-2 px-6 bg-transparent text-gray-400 hover:text-white rounded-xl font-semibold text-sm transition-colors">
+                    Về Trang Chủ
+                </button>
+            </div>
+        </div>
+
     </div>
+
+    <!-- Game overlays and controls -->
+    <div id="crosshair"></div>
+    <div id="hit-marker" class="hit-marker"></div>
+
+    <div id="joystick-zone" class="pointer-events-auto">
+        <div id="joystick-knob"></div>
+    </div>
+    <div id="touch-look-zone" class="pointer-events-auto"></div>
+    <button id="shoot-btn" class="pointer-events-auto shadow-lg shadow-red-500/50">BẮN</button>
+
+
     <script>
-        let selectedCards = [];
+        // --- State Management ---
+        const GAME_STATE = { MENU: 0, PLAYING: 1, GAMEOVER: 2 };
+        let currentState = GAME_STATE.MENU;
         let score = 0;
+        let highScore = localStorage.getItem('cf3d_highscore') || 0;
+        let hp = 100;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
-            }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+        // --- DOM Elements ---
+        const ui = {
+            menu: document.getElementById('menu-screen'),
+            hud: document.getElementById('hud-screen'),
+            gameOver: document.getElementById('game-over-screen'),
+            score: document.getElementById('score-display'),
+            highScore: document.getElementById('high-score-display'),
+            finalScore: document.getElementById('final-score'),
+            hpBar: document.getElementById('hp-bar'),
+            hpText: document.getElementById('hp-text'),
+            startBtn: document.getElementById('start-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            menuBtn: document.getElementById('menu-btn'),
+            crosshair: document.getElementById('crosshair'),
+            joystickZone: document.getElementById('joystick-zone'),
+            touchLookZone: document.getElementById('touch-look-zone'),
+            shootBtn: document.getElementById('shoot-btn'),
+            damageOverlay: document.getElementById('damage-overlay'),
+            hitMarker: document.getElementById('hit-marker')
+        };
+
+        ui.highScore.innerText = highScore;
+
+        // --- Check Mobile ---
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if(isMobile) {
+            ui.joystickZone.style.display = 'block';
+            ui.touchLookZone.style.display = 'block';
+            ui.shootBtn.style.display = 'flex';
+        }
+
+        // --- Three.js Setup ---
+        const canvas = document.getElementById('game-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // optimize performance
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.FogExp2(0x050505, 0.02);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // Player setup
+        const player = new THREE.Group();
+        player.position.set(0, 1.6, 0); // eye level
+        scene.add(player);
+        player.add(camera);
+
+        // Environment
+        const gridHelper = new THREE.GridHelper(200, 100, 0x00ff00, 0x003300);
+        scene.add(gridHelper);
+
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        // Gun Model (Simple blocky gun attached to camera)
+        const gunGroup = new THREE.Group();
+        camera.add(gunGroup);
+
+        const gunGeo = new THREE.BoxGeometry(0.1, 0.1, 0.4);
+        const gunMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const gun = new THREE.Mesh(gunGeo, gunMat);
+        gun.position.set(0.2, -0.2, -0.5);
+        gunGroup.add(gun);
+
+        // Muzzle Flash
+        const flashGeo = new THREE.PlaneGeometry(0.2, 0.2);
+        const flashMat = new THREE.MeshBasicMaterial({ color: 0xffff00, transparent: true, opacity: 0, side: THREE.DoubleSide });
+        const flash = new THREE.Mesh(flashGeo, flashMat);
+        flash.position.set(0.2, -0.2, -0.72);
+        gunGroup.add(flash);
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+
+        // --- Controls & Input ---
+        const keys = { w: false, a: false, s: false, d: false };
+        let isShooting = false;
+
+        // Mobile Controls State
+        let touchMove = { x: 0, y: 0, active: false, id: null };
+        let touchLook = { x: 0, y: 0, active: false, id: null, lastX: 0, lastY: 0 };
+
+        // Rotation variables
+        let pitch = 0; // up/down
+        let yaw = 0;   // left/right
+
+        const PI_2 = Math.PI / 2;
+        const lookSpeedDesktop = 0.002;
+        const lookSpeedMobile = 0.005;
+
+        if (!isMobile) {
+            // PointerLock for Desktop
+            document.addEventListener('click', () => {
+                if (currentState === GAME_STATE.PLAYING && document.pointerLockElement !== document.body) {
+                    document.body.requestPointerLock();
+                }
+            });
+
+            document.addEventListener('pointerlockchange', () => {
+                if (document.pointerLockElement === document.body) {
+                    ui.menu.classList.add('hidden');
+                    if(currentState !== GAME_STATE.PLAYING) startGame();
+                } else {
+                    if(currentState === GAME_STATE.PLAYING) {
+                        // Show pause/menu
                     }
-                }, 1000);
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement !== document.body || currentState !== GAME_STATE.PLAYING) return;
+
+                yaw -= e.movementX * lookSpeedDesktop;
+                pitch -= e.movementY * lookSpeedDesktop;
+                pitch = Math.max(-PI_2, Math.min(PI_2, pitch));
+
+                player.rotation.y = yaw;
+                camera.rotation.x = pitch;
+            });
+
+            // Keyboard
+            document.addEventListener('keydown', (e) => {
+                if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = true;
+            });
+            document.addEventListener('keyup', (e) => {
+                if(keys.hasOwnProperty(e.key.toLowerCase())) keys[e.key.toLowerCase()] = false;
+            });
+
+            // Mouse click to shoot
+            document.addEventListener('mousedown', (e) => {
+                if (e.button === 0 && currentState === GAME_STATE.PLAYING && document.pointerLockElement === document.body) {
+                    isShooting = true;
+                }
+            });
+            document.addEventListener('mouseup', (e) => {
+                if (e.button === 0) isShooting = false;
+            });
+
+        } else {
+            // Mobile Touch Controls
+            const joystickKnob = document.getElementById('joystick-knob');
+            const zoneRect = ui.joystickZone.getBoundingClientRect();
+            const maxRadius = zoneRect.width / 2;
+            const centerX = zoneRect.left + maxRadius;
+            const centerY = zoneRect.top + maxRadius;
+
+            // Joystick (Movement)
+            ui.joystickZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                touchMove.active = true;
+                touchMove.id = touch.identifier;
+                updateJoystick(touch);
+            }, {passive: false});
+
+            ui.joystickZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchMove.id) {
+                        updateJoystick(e.changedTouches[i]);
+                    }
+                }
+            }, {passive: false});
+
+            const resetJoystick = () => {
+                touchMove.active = false;
+                touchMove.x = 0;
+                touchMove.y = 0;
+                joystickKnob.style.transform = `translate(-50%, -50%)`;
+            };
+
+            ui.joystickZone.addEventListener('touchend', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchMove.id) resetJoystick();
+                }
+            });
+            ui.joystickZone.addEventListener('touchcancel', resetJoystick);
+
+            function updateJoystick(touch) {
+                // Get fresh rect because layout might change
+                const rect = ui.joystickZone.getBoundingClientRect();
+                const rCenterX = rect.left + rect.width / 2;
+                const rCenterY = rect.top + rect.height / 2;
+                const rMax = rect.width / 2;
+
+                let dx = touch.clientX - rCenterX;
+                let dy = touch.clientY - rCenterY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > rMax) {
+                    dx = (dx / distance) * rMax;
+                    dy = (dy / distance) * rMax;
+                }
+
+                joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+                // Normalize -1 to 1
+                touchMove.x = dx / rMax;
+                touchMove.y = dy / rMax;
+            }
+
+            // Look Zone (Right screen)
+            ui.touchLookZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                touchLook.active = true;
+                touchLook.id = touch.identifier;
+                touchLook.lastX = touch.clientX;
+                touchLook.lastY = touch.clientY;
+            }, {passive: false});
+
+            ui.touchLookZone.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if(currentState !== GAME_STATE.PLAYING) return;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === touchLook.id) {
+                        const deltaX = touch.clientX - touchLook.lastX;
+                        const deltaY = touch.clientY - touchLook.lastY;
+
+                        yaw -= deltaX * lookSpeedMobile;
+                        pitch -= deltaY * lookSpeedMobile;
+                        pitch = Math.max(-PI_2, Math.min(PI_2, pitch));
+
+                        player.rotation.y = yaw;
+                        camera.rotation.x = pitch;
+
+                        touchLook.lastX = touch.clientX;
+                        touchLook.lastY = touch.clientY;
+                    }
+                }
+            }, {passive: false});
+
+            const resetLook = (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchLook.id) touchLook.active = false;
+                }
+            };
+            ui.touchLookZone.addEventListener('touchend', resetLook);
+            ui.touchLookZone.addEventListener('touchcancel', resetLook);
+
+            // Shoot Button
+            ui.shootBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if(currentState === GAME_STATE.PLAYING) isShooting = true;
+            }, {passive: false});
+            ui.shootBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                isShooting = false;
+            });
+        }
+
+        // Fix standard buttons click for mobile/desktop
+        ui.startBtn.addEventListener('click', () => { if(currentState !== GAME_STATE.PLAYING) startGame(); });
+        ui.startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if(currentState !== GAME_STATE.PLAYING) startGame(); }, {passive:false});
+
+        ui.restartBtn.addEventListener('click', () => { resetGame(); startGame(); });
+        ui.restartBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); startGame(); }, {passive:false});
+
+        ui.menuBtn.addEventListener('click', () => { resetGame(); ui.gameOver.classList.add('hidden'); ui.menu.classList.remove('hidden'); });
+        ui.menuBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); ui.gameOver.classList.add('hidden'); ui.menu.classList.remove('hidden'); }, {passive:false});
+
+        // --- Core Functions Stubs ---
+        function startGame() {
+            currentState = GAME_STATE.PLAYING;
+            ui.menu.classList.add('hidden');
+            ui.gameOver.classList.add('hidden');
+            ui.hud.classList.remove('hidden');
+            if(!isMobile) ui.crosshair.style.display = 'block';
+            console.log("Game Started");
+        }
+
+        function resetGame() {
+            score = 0;
+            hp = 100;
+            ui.score.innerText = score;
+            ui.hpText.innerText = hp;
+            ui.hpBar.style.width = '100%';
+            currentState = GAME_STATE.MENU;
+            if(!isMobile) ui.crosshair.style.display = 'none';
+        }
+
+        // Basic render loop to keep things alive
+
+
+
+        // --- Audio System (Web Audio API Synthesizer) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'shoot') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'hit') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'kill') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'hurt') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+                gain.gain.setValueAtTime(0.5, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        // Attach click sounds to buttons
+        ui.startBtn.addEventListener('click', () => playSound('click'));
+        ui.restartBtn.addEventListener('click', () => playSound('click'));
+        ui.menuBtn.addEventListener('click', () => playSound('click'));
+
+        // --- Game Logic ---
+
+        const enemies = [];
+        const enemyGeo = new THREE.BoxGeometry(1, 2, 1);
+        const enemyMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+
+        const raycaster = new THREE.Raycaster();
+        const screenCenter = new THREE.Vector2(0, 0);
+
+        let lastTime = performance.now();
+        let spawnTimer = 0;
+        let shootTimer = 0;
+        const FIRE_RATE = 0.15; // seconds
+
+        // Basic physics bounds
+        const bounds = 90;
+
+        function spawnEnemy() {
+            if (currentState !== GAME_STATE.PLAYING) return;
+            const enemy = new THREE.Mesh(enemyGeo, enemyMat);
+
+            // Spawn in a circle around player
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 40 + Math.random() * 20;
+            enemy.position.x = player.position.x + Math.cos(angle) * distance;
+            enemy.position.z = player.position.z + Math.sin(angle) * distance;
+            enemy.position.y = 1;
+
+            // Stats
+            enemy.userData = { hp: 30, speed: 4 + Math.random() * 3 };
+
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        function takeDamage(amount) {
+            if (currentState !== GAME_STATE.PLAYING) return;
+            hp -= amount;
+            if (hp <= 0) hp = 0;
+
+            ui.hpText.innerText = Math.floor(hp);
+            ui.hpBar.style.width = hp + '%';
+
+            // Visual feedback
+            ui.damageOverlay.classList.remove('damage-flash');
+            void ui.damageOverlay.offsetWidth; // trigger reflow
+            ui.damageOverlay.classList.add('damage-flash');
+
+            if (hp <= 0) {
+                gameOver();
             }
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        function gameOver() {
+            currentState = GAME_STATE.GAMEOVER;
+            document.exitPointerLock?.();
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('cf3d_highscore', highScore);
+                ui.highScore.innerText = highScore;
+            }
+
+            ui.finalScore.innerText = score;
+            ui.hud.classList.add('hidden');
+            ui.gameOver.classList.remove('hidden');
+            if(!isMobile) ui.crosshair.style.display = 'none';
+            isShooting = false;
+        }
+
+        function resetGame() {
+            score = 0;
+            hp = 100;
+            ui.score.innerText = score;
+            ui.hpText.innerText = hp;
+            ui.hpBar.style.width = '100%';
+
+            player.position.set(0, 1.6, 0);
+            yaw = 0; pitch = 0;
+            player.rotation.y = yaw;
+            camera.rotation.x = pitch;
+
+            enemies.forEach(e => scene.remove(e));
+            enemies.length = 0;
+
+            currentState = GAME_STATE.MENU;
+            if(!isMobile) ui.crosshair.style.display = 'none';
+        }
+
+        // Overwrite standard function
+        window.resetGame = resetGame;
+
+        function update(dt) {
+            if (currentState !== GAME_STATE.PLAYING) return;
+
+            // Movement
+            const moveSpeed = 15 * dt;
+            const direction = new THREE.Vector3();
+
+            if (!isMobile) {
+                if (keys.w) direction.z -= 1;
+                if (keys.s) direction.z += 1;
+                if (keys.a) direction.x -= 1;
+                if (keys.d) direction.x += 1;
+            } else if (touchMove.active) {
+                direction.x = touchMove.x;
+                direction.z = touchMove.y;
+            }
+
+            direction.normalize();
+            direction.applyEuler(new THREE.Euler(0, yaw, 0));
+            player.position.addScaledVector(direction, moveSpeed);
+
+            // Bounds check
+            player.position.x = Math.max(-bounds, Math.min(bounds, player.position.x));
+            player.position.z = Math.max(-bounds, Math.min(bounds, player.position.z));
+
+            // Shooting logic
+            shootTimer -= dt;
+            if (isShooting && shootTimer <= 0) {
+                shootTimer = FIRE_RATE;
+                playSound('shoot');
+
+                // Recoil visual
+                gun.position.z = -0.4;
+                flash.material.opacity = 1;
+                setTimeout(() => { gun.position.z = -0.5; flash.material.opacity = 0; }, 50);
+
+                // Raycast
+                raycaster.setFromCamera(screenCenter, camera);
+                const intersects = raycaster.intersectObjects(enemies);
+
+                if (intersects.length > 0) {
+                    const hitEnemy = intersects[0].object;
+                    hitEnemy.userData.hp -= 15;
+                    playSound('hit');
+
+                    // Hit marker feedback
+                    ui.hitMarker.style.opacity = 1;
+                    ui.hitMarker.style.transform = 'translate(-50%, -50%) scale(1.5) rotate(45deg)';
+                    setTimeout(() => {
+                        ui.hitMarker.style.opacity = 0;
+                        ui.hitMarker.style.transform = 'translate(-50%, -50%) scale(1) rotate(45deg)';
+                    }, 100);
+
+                    if (hitEnemy.userData.hp <= 0) {
+                        scene.remove(hitEnemy);
+                        enemies.splice(enemies.indexOf(hitEnemy), 1);
+                        score += 10;
+                        playSound('kill');
+                        ui.score.innerText = score;
+                        ui.score.parentElement.classList.add('animate-pulse-fast');
+                        setTimeout(() => ui.score.parentElement.classList.remove('animate-pulse-fast'), 300);
+                    } else {
+                        // Flash enemy white on hit
+                        hitEnemy.material.color.setHex(0xffffff);
+                        setTimeout(() => hitEnemy.material.color.setHex(0xff0000), 100);
+                    }
+                }
+            }
+
+            // Enemy Logic
+            spawnTimer -= dt;
+            if (spawnTimer <= 0) {
+                spawnEnemy();
+                spawnTimer = Math.max(0.5, 2.0 - (score * 0.01)); // gets faster
+            }
+
+            const pPos = player.position.clone();
+            pPos.y = 1; // ground level for enemies
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                const dir = pPos.clone().sub(enemy.position);
+                const dist = dir.length();
+
+                if (dist > 1.5) {
+                    dir.normalize();
+                    enemy.position.addScaledVector(dir, enemy.userData.speed * dt);
+                    enemy.lookAt(pPos);
+                } else {
+                    // Attack player
+                    takeDamage(10 * dt);
+                    if (Math.random() < 0.05) playSound('hurt');
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+            const dt = (time - lastTime) / 1000;
+            lastTime = time;
+
+            update(dt);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        console.log("Three.js Scene initialized");
     </script>
 </body>
 </html>
