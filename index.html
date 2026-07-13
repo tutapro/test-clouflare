@@ -1,173 +1,271 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rắn Săn Mồi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        body {
+            font-family: 'Nunito', sans-serif;
+            touch-action: manipulation;
         }
-        .card:hover {
-            transform: scale(1.05);
+        canvas {
+            background-color: #1f2937; /* Tailwind gray-800 */
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            max-width: 100%;
         }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
-        }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
+        /* Mobile control button styling */
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
             display: flex;
             justify-content: center;
             align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            user-select: none;
+            cursor: pointer;
         }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+        .control-btn:active {
+            background: rgba(255, 255, 255, 0.4);
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
+<body class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 min-h-screen text-white flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-md flex flex-col items-center">
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center mb-4 px-2">
+            <h1 class="text-3xl font-black drop-shadow-md text-yellow-300">Rắn Săn Mồi</h1>
+            <div class="text-right">
+                <p class="text-lg font-bold">Điểm: <span id="score">0</span></p>
+                <p class="text-sm opacity-80">Kỷ lục: <span id="high-score">0</span></p>
             </div>
         </div>
+
+        <!-- Game Area -->
+        <div class="relative w-full aspect-square max-w-[400px] mb-6">
+            <canvas id="gameCanvas" width="400" height="400" class="w-full h-full block"></canvas>
+
+            <!-- Game Over Overlay -->
+            <div id="gameOverScreen" class="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center rounded-lg hidden">
+                <h2 class="text-4xl font-bold text-red-400 mb-2">Trò chơi kết thúc</h2>
+                <p class="text-xl mb-6">Điểm của bạn: <span id="final-score" class="font-bold text-yellow-300">0</span></p>
+                <button id="restartBtn" class="px-6 py-3 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 rounded-full font-bold text-xl shadow-lg transform transition hover:scale-105 active:scale-95">
+                    Chơi Lại
+                </button>
+            </div>
+
+            <!-- Start Screen Overlay -->
+            <div id="startScreen" class="absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center rounded-lg">
+                <button id="startBtn" class="px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 rounded-full font-black text-2xl shadow-lg transform transition hover:scale-105 active:scale-95 text-white">
+                    Bắt Đầu Chơi
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Controls (Visible mostly on smaller screens, but active always if clicked) -->
+        <div class="grid grid-cols-3 gap-2 sm:hidden mb-4">
+            <div></div>
+            <div class="control-btn" id="btn-up">▲</div>
+            <div></div>
+            <div class="control-btn" id="btn-left">◀</div>
+            <div class="control-btn" id="btn-down">▼</div>
+            <div class="control-btn" id="btn-right">▶</div>
+        </div>
+
+        <p class="hidden sm:block text-sm opacity-80 text-center mt-2">Sử dụng phím mũi tên hoặc W A S D để di chuyển</p>
     </div>
+
     <script>
-        let selectedCards = [];
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('high-score');
+        const finalScoreEl = document.getElementById('final-score');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const startScreen = document.getElementById('startScreen');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+
+        // Grid setting
+        const grid = 20; // 20x20 squares
+        const tileCount = canvas.width / grid;
+
+        let snake = [];
+        let food = {};
+        let dx = 0;
+        let dy = 0;
         let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let gameLoop;
+        let gameSpeed = 120;
+        let isPlaying = false;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
+        highScoreEl.innerText = highScore;
+
+        function initGame() {
+            snake = [
+                {x: 10, y: 10},
+            ];
+            dx = 0;
+            dy = 0;
+            score = 0;
+            scoreEl.innerText = score;
+            gameSpeed = 120;
+            placeFood();
+            gameOverScreen.classList.add('hidden');
+            startScreen.classList.add('hidden');
+            isPlaying = true;
+
+            if (gameLoop) clearTimeout(gameLoop);
+            step();
+        }
+
+        function placeFood() {
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+            // Prevent food from spawning on snake
+            for (let part of snake) {
+                if (part.x === food.x && part.y === food.y) {
+                    placeFood();
+                    return;
+                }
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+        }
+
+        function step() {
+            if (!isPlaying) return;
+
+            // Move logic if dx or dy is set
+            if (dx !== 0 || dy !== 0) {
+                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+                // Check wall collision
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                    return gameOver();
+                }
+
+                // Check self collision
+                for (let i = 0; i < snake.length; i++) {
+                    if (head.x === snake[i].x && head.y === snake[i].y) {
+                        return gameOver();
                     }
-                }, 1000);
+                }
+
+                snake.unshift(head);
+
+                // Check food collision
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10;
+                    scoreEl.innerText = score;
+                    if (gameSpeed > 50) gameSpeed -= 2; // Increase speed
+                    placeFood();
+                } else {
+                    snake.pop();
+                }
             }
+
+            draw();
+            gameLoop = setTimeout(step, gameSpeed);
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid lines (optional for polish)
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 0.5;
+            for(let i = 0; i < canvas.width; i+=grid) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
             }
+
+            // Draw food
+            ctx.fillStyle = '#ef4444'; // Red
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(food.x * grid + grid/2, food.y * grid + grid/2, grid/2.2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Draw snake
+            snake.forEach((part, index) => {
+                ctx.fillStyle = index === 0 ? '#34d399' : '#10b981'; // Lighter green head
+                ctx.fillRect(part.x * grid + 1, part.y * grid + 1, grid - 2, grid - 2);
+            });
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        function gameOver() {
+            isPlaying = false;
+            finalScoreEl.innerText = score;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('snakeHighScore', highScore);
+                highScoreEl.innerText = highScore;
+            }
+            gameOverScreen.classList.remove('hidden');
+        }
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+        // Controls
+        function setDirection(newDx, newDy) {
+            if (!isPlaying && gameOverScreen.classList.contains('hidden') && startScreen.classList.contains('hidden')) {
+                 // Game started but waiting for first move
+            }
+            // Prevent 180-degree turns
+            if (snake.length > 1 && newDx === -dx && newDy === -dy) return;
+            dx = newDx;
+            dy = newDy;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
+                e.preventDefault();
+            }
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') setDirection(0, -1);
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') setDirection(0, 1);
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') setDirection(-1, 0);
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') setDirection(1, 0);
+        });
+
+        // Mobile Controls
+        document.getElementById('btn-up').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(0, -1); });
+        document.getElementById('btn-down').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(0, 1); });
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(-1, 0); });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); setDirection(1, 0); });
+
+        // Fallback to mouse events for testing on desktop
+        document.getElementById('btn-up').addEventListener('mousedown', () => setDirection(0, -1));
+        document.getElementById('btn-down').addEventListener('mousedown', () => setDirection(0, 1));
+        document.getElementById('btn-left').addEventListener('mousedown', () => setDirection(-1, 0));
+        document.getElementById('btn-right').addEventListener('mousedown', () => setDirection(1, 0));
+
+        startBtn.addEventListener('click', initGame);
+        restartBtn.addEventListener('click', initGame);
+
+        // Initial draw
+        draw();
     </script>
 </body>
 </html>
