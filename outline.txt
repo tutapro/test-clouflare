@@ -1,0 +1,17 @@
+# Design
+- Single file: index.html
+- Mobile-first: touch + swipe support, prevent scroll/zoom
+- Modern UI: gradient background, glassmorphism, rounded corners, soft shadows
+- Animations: CSS transitions, keyframe animations (pulse, pop, shake)
+- Vietnamese UI: Điểm, Chơi lại, Hướng dẫn, etc.
+- NO alert()/prompt() - use custom modal/toast
+- localStorage for high score
+- Responsive: 320px to 1920px
+- Tailwind CSS via CDN
+- Google Fonts: Poppins/Inter
+- Self-contained: inline CSS+JS
+- Game: "game bắn bi a" (Billiards/Pool)
+- Full game loop
+- Mobile controls or touch drag to aim and shoot
+- Sound effects via Web Audio API
+- Visual feedback

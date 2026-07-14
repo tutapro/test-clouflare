@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+const fs = require('fs');
+
+const htmlContent = `<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -275,7 +277,7 @@
             },
             showToast: (msg, colorClass = 'bg-blue-500/80') => {
                 const toast = document.createElement('div');
-                toast.className = `toast glassmorphism ${colorClass}`;
+                toast.className = \`toast glassmorphism \${colorClass}\`;
                 toast.innerText = msg;
                 UI.toastContainer.appendChild(toast);
 
@@ -337,8 +339,8 @@
                 w = h * aspect;
             }
 
-            canvas.style.width = `${w}px`;
-            canvas.style.height = `${h}px`;
+            canvas.style.width = \`\${w}px\`;
+            canvas.style.height = \`\${h}px\`;
 
             // Set internal resolution strictly
             canvas.width = TABLE_WIDTH;
@@ -597,7 +599,7 @@
                 setTimeout(() => {
                     UI.showModal(
                         'Chiến thắng! 🏆',
-                        `Chúc mừng! Bạn đã dọn sạch bàn.<br>Tổng điểm: <b class="text-emerald-400">${score}</b>`,
+                        \`Chúc mừng! Bạn đã dọn sạch bàn.<br>Tổng điểm: <b class="text-emerald-400">\${score}</b>\`,
                         'Chơi lại',
                         initGame
                     );
@@ -728,3 +730,7 @@
     </script>
 </body>
 </html>
+`;
+
+fs.writeFileSync('index.html', htmlContent);
+console.log('index.html has been generated successfully.');
