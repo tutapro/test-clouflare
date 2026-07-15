@@ -1,173 +1,786 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Game Bắn Bi A</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" onerror="console.warn('Failed to load Google Fonts'); this.onerror=null;">
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
-        .card:hover {
-            transform: scale(1.05);
-        }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
-        }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
+
+        body, html {
+            margin: 0;
+            padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #f7f7f7;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Poppins', sans-serif;
+            touch-action: none; /* Prevent scroll/zoom */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .glassmorphism {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .btn-hover {
+            transition: all 0.3s ease;
+        }
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .btn-hover:active {
+            transform: translateY(1px);
+        }
+
+        @keyframes pulse-score {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #4ade80; }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse-score 0.5s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-width: 95vw;
+            max-height: 70vh;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .pointer-events-auto {
+            pointer-events: auto;
+        }
+
+        /* Modal specific */
+        #modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 50;
             display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(20px);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+    <div id="game-container">
+        <canvas id="pool-canvas"></canvas>
+
+        <div id="ui-layer">
+            <!-- Top HUD -->
+            <div class="flex justify-between w-full pointer-events-auto">
+                <div class="glassmorphism px-4 py-2 rounded-xl flex items-center gap-2">
+                    <span class="text-white/70 text-sm">Điểm:</span>
+                    <span id="score-display" class="text-white font-bold text-xl">0</span>
                 </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+                <div class="glassmorphism px-4 py-2 rounded-xl flex items-center gap-2">
+                    <span class="text-white/70 text-sm">Kỷ lục:</span>
+                    <span id="highscore-display" class="text-yellow-400 font-bold text-xl">0</span>
                 </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="flex justify-between w-full pointer-events-auto">
+                <button id="btn-guide" class="glassmorphism px-6 py-3 rounded-full text-white font-semibold btn-hover flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Hướng dẫn
+                </button>
+                <button id="btn-restart" class="glassmorphism px-6 py-3 rounded-full text-white font-semibold btn-hover flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Chơi lại
+                </button>
             </div>
         </div>
     </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay">
+        <div id="modal-content" class="glassmorphism p-8 rounded-2xl max-w-sm w-full mx-4 text-center text-white pop-in relative">
+            <button id="btn-close-modal" class="absolute top-4 right-4 text-white/50 hover:text-white transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 id="modal-title" class="text-3xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Tiêu đề</h2>
+            <p id="modal-desc" class="text-white/80 mb-6">Nội dung</p>
+            <button id="btn-modal-action" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 py-3 rounded-xl font-bold btn-hover shadow-lg">
+                Hành động
+            </button>
+        </div>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toast-container"></div>
+
     <script>
-        let selectedCards = [];
-        let score = 0;
+        // --- AUDIO SYSTEM (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
+        function playTone(freq, type, duration, vol) {
+            if (typeof freq !== 'number' || typeof type !== 'string' || typeof duration !== 'number' || typeof vol !== 'number') return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sounds = {
+            hit: (velocity) => {
+                const vol = Math.min(Math.max(velocity * 0.1, 0.05), 0.5);
+                playTone(300 + Math.random()*50, 'sine', 0.1, vol);
+            },
+            cushion: (velocity) => {
+                const vol = Math.min(Math.max(velocity * 0.05, 0.02), 0.3);
+                playTone(150, 'triangle', 0.1, vol);
+            },
+            pocket: () => {
+                playTone(600, 'square', 0.1, 0.1);
+                setTimeout(() => playTone(800, 'sine', 0.2, 0.2), 100);
+            },
+            fail: () => {
+                playTone(200, 'sawtooth', 0.3, 0.2);
+                setTimeout(() => playTone(150, 'sawtooth', 0.4, 0.2), 200);
+            },
+            win: () => {
+                playTone(523.25, 'sine', 0.1, 0.2); // C5
+                setTimeout(() => playTone(659.25, 'sine', 0.1, 0.2), 100); // E5
+                setTimeout(() => playTone(783.99, 'sine', 0.2, 0.2), 200); // G5
+                setTimeout(() => playTone(1046.50, 'sine', 0.4, 0.2), 300); // C6
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
+        };
+
+        // --- UI SYSTEM ---
+        const UI = {
+            scoreEl: document.getElementById('score-display'),
+            highScoreEl: document.getElementById('highscore-display'),
+            modalOverlay: document.getElementById('modal-overlay'),
+            modalTitle: document.getElementById('modal-title'),
+            modalDesc: document.getElementById('modal-desc'),
+            modalBtn: document.getElementById('btn-modal-action'),
+            toastContainer: document.getElementById('toast-container'),
+
+            updateScore: (score) => {
+                UI.scoreEl.innerText = score;
+                UI.scoreEl.classList.remove('pulse');
+                void UI.scoreEl.offsetWidth; // trigger reflow
+                UI.scoreEl.classList.add('pulse');
+            },
+            updateHighScore: (score) => {
+                UI.highScoreEl.innerText = score;
+            },
+            showModal: (title, desc, btnText, callback) => {
+                UI.modalTitle.innerText = title;
+                UI.modalDesc.innerHTML = desc;
+                UI.modalBtn.innerText = btnText;
+                UI.modalOverlay.style.display = 'flex';
+
+                const newBtn = UI.modalBtn.cloneNode(true);
+                UI.modalBtn.parentNode.replaceChild(newBtn, UI.modalBtn);
+                UI.modalBtn = newBtn;
+
+                UI.modalBtn.addEventListener('click', () => {
+                    UI.hideModal();
+                    if(callback) callback();
+                });
+            },
+            hideModal: () => {
+                UI.modalOverlay.style.display = 'none';
+            },
+            showToast: (msg, colorClass = 'bg-blue-500/80') => {
+                const toast = document.createElement('div');
+                toast.className = `toast glassmorphism ${colorClass}`;
+                toast.innerText = msg;
+                UI.toastContainer.appendChild(toast);
+
+                // Animate in
+                setTimeout(() => toast.classList.add('show'), 10);
+
+                // Animate out
                 setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, DELAY_TOAST_FADEOUT);
+            }
+        };
+
+        document.getElementById('btn-close-modal').addEventListener('click', UI.hideModal);
+
+        // --- PHYSICS & GAME LOGIC ---
+        const canvas = document.getElementById('pool-canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            UI.showModal('Lỗi', 'Trình duyệt không hỗ trợ Canvas 2D.', 'Đóng', () => {});
+            throw new Error('Canvas 2D context not supported');
+        }
+
+        // Game Constants
+        const TABLE_WIDTH = 800;
+        const TABLE_HEIGHT = 400;
+        const BALL_RADIUS = 12;
+        const POCKET_RADIUS = 20;
+        const FRICTION = 0.985;
+        const CUSHION_RESTITUTION = 0.8;
+        const BALL_RESTITUTION = 0.9;
+
+        // Timeouts
+        const DELAY_SCRATCH_RESPAWN = 1000;
+        const DELAY_WIN_MODAL = 1000;
+        const DELAY_TOAST_FADEOUT = 2000;
+
+        // Colors
+        const TABLE_COLOR = '#0a6c38'; // Dark green
+        const CUSHION_COLOR = '#4a2f1d'; // Wood
+        const POCKET_COLOR = '#111';
+
+        // State
+        const gameState = {
+            balls: [],
+            pockets: [],
+            isAiming: false,
+            aimStart: {x: 0, y: 0},
+            aimCurrent: {x: 0, y: 0},
+            score: 0,
+            highScore: 0
+        };
+        try {
+            gameState.highScore = localStorage.getItem('poolHighScore') || 0;
+        } catch (e) {
+            console.warn('localStorage is not available:', e);
+        }
+        UI.updateHighScore(gameState.highScore);
+
+        // Responsive sizing
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            const cw = container.clientWidth * 0.95;
+            const ch = container.clientHeight * 0.7;
+
+            const aspect = TABLE_WIDTH / TABLE_HEIGHT;
+
+            let w = cw;
+            let h = w / aspect;
+
+            if (h > ch) {
+                h = ch;
+                w = h * aspect;
+            }
+
+            canvas.style.width = `${w}px`;
+            canvas.style.height = `${h}px`;
+
+            // Set internal resolution strictly
+            canvas.width = TABLE_WIDTH;
+            canvas.height = TABLE_HEIGHT;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        /**
+         * Represents a pool ball on the table.
+         * Handles position, velocity, rendering, and boundary collisions.
+         */
+        class Ball {
+            constructor(x, y, color, isCue = false) {
+                if (typeof x !== 'number') x = 0;
+                if (typeof y !== 'number') y = 0;
+                if (typeof color !== 'string') color = '#fff';
+
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.color = color;
+                this.isCue = isCue;
+                this.active = true;
+            }
+
+            draw() {
+                if(!this.active) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, BALL_RADIUS, 0, Math.PI * 2);
+                setFillStyle(this.color);
+                ctx.fill();
+
+                // Highlight/Shading
+                ctx.beginPath();
+                ctx.arc(this.x - BALL_RADIUS*0.3, this.y - BALL_RADIUS*0.3, BALL_RADIUS*0.3, 0, Math.PI * 2);
+                setFillStyle('rgba(255,255,255,0.4)');
+                ctx.fill();
+
+                setStrokeStyle('rgba(0,0,0,0.3)');
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, BALL_RADIUS, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            update() {
+                if(!this.active) return;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                this.vx *= FRICTION;
+                this.vy *= FRICTION;
+
+                // Stop small movements
+                if (Math.abs(this.vx) < 0.05) this.vx = 0;
+                if (Math.abs(this.vy) < 0.05) this.vy = 0;
+
+                // Cushion collision
+                if (this.x - BALL_RADIUS < 0) {
+                    this.x = BALL_RADIUS;
+                    this.vx *= -CUSHION_RESTITUTION;
+                    if(Math.abs(this.vx) > 0.5) sounds.cushion(Math.abs(this.vx));
+                } else if (this.x + BALL_RADIUS > TABLE_WIDTH) {
+                    this.x = TABLE_WIDTH - BALL_RADIUS;
+                    this.vx *= -CUSHION_RESTITUTION;
+                    if(Math.abs(this.vx) > 0.5) sounds.cushion(Math.abs(this.vx));
+                }
+
+                if (this.y - BALL_RADIUS < 0) {
+                    this.y = BALL_RADIUS;
+                    this.vy *= -CUSHION_RESTITUTION;
+                    if(Math.abs(this.vy) > 0.5) sounds.cushion(Math.abs(this.vy));
+                } else if (this.y + BALL_RADIUS > TABLE_HEIGHT) {
+                    this.y = TABLE_HEIGHT - BALL_RADIUS;
+                    this.vy *= -CUSHION_RESTITUTION;
+                    if(Math.abs(this.vy) > 0.5) sounds.cushion(Math.abs(this.vy));
+                }
+            }
+        }
+
+        function initPockets() {
+            gameState.pockets = [
+                {x: 0, y: 0},
+                {x: TABLE_WIDTH / 2, y: 0},
+                {x: TABLE_WIDTH, y: 0},
+                {x: 0, y: TABLE_HEIGHT},
+                {x: TABLE_WIDTH / 2, y: TABLE_HEIGHT},
+                {x: TABLE_WIDTH, y: TABLE_HEIGHT}
+            ];
+        }
+
+        const ballColors = ['#e74c3c', '#f1c40f', '#3498db', '#9b59b6', '#e67e22', '#1abc9c', '#34495e', '#d35400', '#2ecc71', '#c0392b'];
+
+        /**
+         * Initializes the game state, positioning the cue ball and target balls in a triangle.
+         */
+        function initGame() {
+            gameState.balls = [];
+            gameState.score = 0;
+            UI.updateScore(gameState.score);
+
+            // Cue ball
+            gameState.balls.push(new Ball(TABLE_WIDTH * 0.25, TABLE_HEIGHT / 2, '#ffffff', true));
+
+            // Triangle setup
+            const startX = TABLE_WIDTH * 0.65;
+            const startY = TABLE_HEIGHT / 2;
+            let colorIdx = 0;
+
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col <= row; col++) {
+                    const x = startX + row * BALL_RADIUS * 1.8;
+                    const y = startY - (row * BALL_RADIUS * 1.1) + (col * BALL_RADIUS * 2.2);
+                    gameState.balls.push(new Ball(x, y, ballColors[colorIdx % ballColors.length]));
+                    colorIdx++;
+                }
+            }
+            initPockets();
+        }
+
+        let currentFillStyle = null;
+        function setFillStyle(color) {
+            if (currentFillStyle !== color) {
+                ctx.fillStyle = color;
+                currentFillStyle = color;
+            }
+        }
+
+        let currentStrokeStyle = null;
+        function setStrokeStyle(color) {
+            if (currentStrokeStyle !== color) {
+                ctx.strokeStyle = color;
+                currentStrokeStyle = color;
+            }
+        }
+
+        function drawTable() {
+            // Wood border
+            setFillStyle(CUSHION_COLOR);
+            ctx.fillRect(0, 0, TABLE_WIDTH, TABLE_HEIGHT);
+
+            // Green felt
+            setFillStyle(TABLE_COLOR);
+            ctx.fillRect(10, 10, TABLE_WIDTH-20, TABLE_HEIGHT-20);
+
+            // Pockets
+            setFillStyle(POCKET_COLOR);
+            gameState.pockets.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, POCKET_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawAimLine() {
+            if (!gameState.isAiming || !gameState.balls[0].active) return;
+
+            const cue = gameState.balls[0];
+            if (cue.vx !== 0 || cue.vy !== 0) return; // Cannot aim while moving
+
+            const dx = gameState.aimCurrent.x - gameState.aimStart.x;
+            const dy = gameState.aimCurrent.y - gameState.aimStart.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < 5) return;
+
+            // Power factor
+            const power = Math.min(dist / 10, 20);
+
+            // Direction from cue
+            const angle = Math.atan2(dy, dx);
+            const shootAngle = angle + Math.PI; // Shoot opposite to drag
+
+            // Draw line
+            ctx.beginPath();
+            ctx.moveTo(cue.x, cue.y);
+            ctx.lineTo(cue.x + Math.cos(shootAngle) * power * 20, cue.y + Math.sin(shootAngle) * power * 20);
+            setStrokeStyle('rgba(255, 255, 255, 0.5)');
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw cue representation
+            ctx.beginPath();
+            ctx.moveTo(cue.x - Math.cos(shootAngle) * 15, cue.y - Math.sin(shootAngle) * 15);
+            ctx.lineTo(cue.x - Math.cos(shootAngle) * (15 + power*5), cue.y - Math.sin(shootAngle) * (15 + power*5));
+            setStrokeStyle('#8B4513');
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        /**
+         * Checks and resolves collisions between all active balls.
+         * Uses 1D elastic collision formulas along the normal vector.
+         */
+        function resolveCollisions() {
+            for (let i = 0; i < gameState.balls.length; i++) {
+                if(!gameState.balls[i].active) continue;
+                for (let j = i + 1; j < gameState.balls.length; j++) {
+                    if(!gameState.balls[j].active) continue;
+
+                    const b1 = gameState.balls[i];
+                    const b2 = gameState.balls[j];
+
+                    const dx = b2.x - b1.x;
+                    const dy = b2.y - b1.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < BALL_RADIUS * 2) {
+                        // Resolve overlap
+                        const overlap = (BALL_RADIUS * 2 - distance) / 2;
+                        const nx = dx / distance;
+                        const ny = dy / distance;
+
+                        b1.x -= nx * overlap;
+                        b1.y -= ny * overlap;
+                        b2.x += nx * overlap;
+                        b2.y += ny * overlap;
+
+                        // Calculate velocities
+                        const kx = (b1.vx - b2.vx);
+                        const ky = (b1.vy - b2.vy);
+
+                        // Impact speed
+                        const p = 2.0 * (nx * kx + ny * ky) / 2; // mass is 1
+
+                        b1.vx = b1.vx - p * nx * BALL_RESTITUTION;
+                        b1.vy = b1.vy - p * ny * BALL_RESTITUTION;
+                        b2.vx = b2.vx + p * nx * BALL_RESTITUTION;
+                        b2.vy = b2.vy + p * ny * BALL_RESTITUTION;
+
+                        const impactSpeed = Math.sqrt(p*p);
+                        if(impactSpeed > 0.5) {
+                            sounds.hit(impactSpeed);
+                        }
                     }
-                }, 1000);
+                }
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
+        function checkPockets() {
+            gameState.balls.forEach(b => {
+                if(!b.active) return;
+                gameState.pockets.forEach(p => {
+                    const dx = b.x - p.x;
+                    const dy = b.y - p.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < POCKET_RADIUS) {
+                        b.active = false;
+                        b.vx = 0; b.vy = 0;
+                        sounds.pocket();
+
+                        if (b.isCue) {
+                            // Scratch
+                            sounds.fail();
+                            UI.showToast('Lỗi! Bi trắng rơi xuống lỗ', 'bg-red-500/80');
+                            setTimeout(() => {
+                                b.x = TABLE_WIDTH * 0.25;
+                                b.y = TABLE_HEIGHT / 2;
+                                b.active = true;
+                                b.vx = 0; b.vy = 0;
+                            }, DELAY_SCRATCH_RESPAWN);
+                        } else {
+                            gameState.score += 10;
+                            UI.updateScore(gameState.score);
+                            if(gameState.score > gameState.highScore) {
+                                gameState.highScore = gameState.score;
+                                try { localStorage.setItem('poolHighScore', gameState.highScore); } catch (e) { console.warn('localStorage set error', e); }
+                                UI.updateHighScore(gameState.highScore);
+                            }
+                            UI.showToast('+10 Điểm!', 'bg-green-500/80');
+                            checkWinCondition();
+                        }
+                    }
+                });
+            });
+        }
+
+        function checkWinCondition() {
+            const activeBalls = gameState.balls.filter(b => b.active && !b.isCue).length;
+            if (activeBalls === 0) {
+                sounds.win();
                 setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+                    UI.showModal(
+                        'Chiến thắng! 🏆',
+                        `Chúc mừng! Bạn đã dọn sạch bàn.<br>Tổng điểm: <b class="text-emerald-400">${gameState.score}</b>`,
+                        'Chơi lại',
+                        initGame
+                    );
+                }, DELAY_WIN_MODAL);
             }
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        function areBallsMoving() {
+            return gameState.balls.some(b => b.active && (Math.abs(b.vx) > 0.05 || Math.abs(b.vy) > 0.05));
+        }
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+        /**
+         * Main game loop: clears canvas, updates physics, and draws everything.
+         * Runs continuously via requestAnimationFrame.
+         */
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawTable();
+
+            gameState.balls.forEach(b => b.update());
+            resolveCollisions();
+            checkPockets();
+
+            gameState.balls.forEach(b => b.draw());
+            drawAimLine();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- INPUT HANDLING ---
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            // Scale coordinates based on actual display size vs internal resolution
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            let clientX, clientY;
+            if (evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            } else {
+                clientX = evt.clientX;
+                clientY = evt.clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function startAim(e) {
+            e.preventDefault(); // Prevent scrolling
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+
+            if (areBallsMoving() || !gameState.balls[0].active) return;
+            gameState.isAiming = true;
+            gameState.aimStart = getMousePos(e);
+            gameState.aimCurrent = gameState.aimStart;
+        }
+
+        function moveAim(e) {
+            e.preventDefault();
+            if (!gameState.isAiming) return;
+            gameState.aimCurrent = getMousePos(e);
+        }
+
+        function endAim(e) {
+            e.preventDefault();
+            if (!gameState.isAiming) return;
+            gameState.isAiming = false;
+
+            const cue = gameState.balls[0];
+            const dx = gameState.aimCurrent.x - gameState.aimStart.x;
+            const dy = gameState.aimCurrent.y - gameState.aimStart.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist > 10) {
+                const angle = Math.atan2(dy, dx);
+                const shootAngle = angle + Math.PI;
+                const power = Math.min(dist / 10, 20);
+
+                cue.vx = Math.cos(shootAngle) * power;
+                cue.vy = Math.sin(shootAngle) * power;
+
+                // Thwack sound
+                playTone(200, 'triangle', 0.1, 0.3);
+            }
+        }
+
+        // Mouse Events
+        canvas.addEventListener('mousedown', startAim);
+        window.addEventListener('mousemove', moveAim);
+        window.addEventListener('mouseup', endAim);
+
+        // Touch Events
+        canvas.addEventListener('touchstart', startAim, {passive: false});
+        window.addEventListener('touchmove', moveAim, {passive: false});
+        window.addEventListener('touchend', endAim, {passive: false});
+
+        // UI Buttons
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const activeBalls = gameState.balls.filter(b => b.active && !b.isCue).length;
+            if (activeBalls === 0 || gameState.balls.length === 0) {
+                initGame();
+            } else {
+                UI.showModal('Chơi lại?', 'Tiến trình hiện tại sẽ bị mất. Bạn có chắc chắn không?', 'Đồng ý', initGame);
+            }
+        });
+
+        document.getElementById('btn-guide').addEventListener('click', () => {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            UI.showModal(
+                'Hướng dẫn chơi',
+                '<div class="text-left space-y-2 text-sm"><li><b>Kéo thả:</b> Chạm (hoặc click) và kéo ngược hướng từ bi trắng để ngắm và chọn lực bắn.</li><li><b>Luật:</b> Bắn bi màu vào lỗ để ghi 10 điểm.</li><li><b>Lỗi:</b> Rơi bi trắng xuống lỗ.</li><li>Dọn sạch bàn để thắng!</li></div>',
+                'Đã hiểu',
+                null
+            );
+        });
+
+        // Init
+        initGame();
+        requestAnimationFrame(gameLoop);
+
+        // Initial welcome modal
+        setTimeout(() => {
+            UI.showModal(
+                'Chào mừng đến Game Bắn Bi A',
+                'Kéo thả để ngắm và bắn. Hãy thể hiện kỹ năng của bạn!',
+                'Bắt đầu chơi',
+                null
+            );
+        }, DELAY_WIN_MODAL);
+
     </script>
 </body>
 </html>
