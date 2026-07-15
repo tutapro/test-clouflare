@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pikachu Connect</title>
     <script src='https://cdn.tailwindcss.com'></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
@@ -10,17 +10,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        body {
+            touch-action: none;
+        }
         .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
+            border-radius: 50%;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s;
             cursor: pointer;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #888888, #333333);
+            box-shadow: 2px 5px 10px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
         }
         .card:hover {
             transform: scale(1.05);
+            box-shadow: 4px 8px 15px rgba(0,0,0,0.4), inset -5px -5px 15px rgba(0,0,0,0.5);
         }
         .active {
             transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.8), inset -5px -5px 15px rgba(0,0,0,0.5);
         }
         .grid {
             display: grid;
@@ -47,52 +61,62 @@
     </style>
 </head>
 <body>
+    <canvas id="guideCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-50"></canvas>
     <div class="grid h-screen w-screen place-items-center">
         <div class="grid w-1/2">
             <div class="grid grid-cols-4 gap-4">
                 <div class="grid-item" id="card-1">
                     <div class="card" id="card-1" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">1</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-2">
                     <div class="card" id="card-2" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">2</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-3">
                     <div class="card" id="card-3" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">3</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-4">
                     <div class="card" id="card-4" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">4</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-5">
                     <div class="card" id="card-5" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">5</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-6">
                     <div class="card" id="card-6" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">6</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-7">
                     <div class="card" id="card-7" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">7</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-8">
                     <div class="card" id="card-8" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">8</span>
                     </div>
                 </div>
                 <div class="grid-item" id="card-9">
                     <div class="card" id="card-9" onclick="selectCard(this)">
                         <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <span class="absolute text-2xl font-bold text-white drop-shadow-md z-10 pointer-events-none">9</span>
                     </div>
                 </div>
             </div>
@@ -168,6 +192,53 @@
                 particle.style.display = 'none';
             }, 2000);
         }, 100);
+
+        // Guide Line Logic
+        const canvas = document.getElementById('guideCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let isDrawing = false;
+        let startX = 0;
+        let startY = 0;
+
+        document.addEventListener('pointerdown', (e) => {
+            const card = e.target.closest('.card');
+            if (card) {
+                isDrawing = true;
+                const rect = card.getBoundingClientRect();
+                startX = rect.left + rect.width / 2;
+                startY = rect.top + rect.height / 2;
+            }
+        });
+
+        document.addEventListener('pointermove', (e) => {
+            if (!isDrawing) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.setLineDash([5, 10]);
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(e.clientX, e.clientY);
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+
+        document.addEventListener('pointerup', () => {
+            isDrawing = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        document.addEventListener('pointercancel', () => {
+            isDrawing = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
     </script>
 </body>
 </html>
