@@ -1,173 +1,653 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>App Xem Bói</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        mystic: {
+                            900: '#1a1025',
+                            800: '#2d1b4e',
+                            700: '#432c7a',
+                            600: '#5a3da6',
+                            500: '#7552d6',
+                            400: '#9474f0',
+                            300: '#b49cfa',
+                            200: '#d5c8fd',
+                            100: '#ede6ff',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
-        .card:hover {
-            transform: scale(1.05);
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1025 0%, #432c7a 50%, #1a1025 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            touch-action: none; /* Prevent browser handling of gestures like pinch-to-zoom */
+            -webkit-user-select: none;
+            user-select: none;
         }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 1.5rem;
         }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .confetti {
-            position: fixed;
+
+        .screen {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(1.05);
+        }
+
+        .btn-mystic {
+            background: linear-gradient(45deg, #7552d6, #9474f0);
+            border: none;
+            border-radius: 9999px;
+            color: white;
+            font-weight: 600;
+            padding: 1rem 2.5rem;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 15px rgba(117, 82, 214, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-mystic:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 10px rgba(117, 82, 214, 0.3);
+        }
+
+        #game-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #game-canvas {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Toggle Switch Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #9474f0;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #9474f0;
+        }
+
+        .header-ui {
+            position: absolute;
+            top: env(safe-area-inset-top, 10px);
+            left: 0;
+            width: 100%;
+            padding: 10px 20px;
+            z-index: 5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none; /* Let touches pass through to canvas where needed */
+        }
+
+        .header-ui > * {
+            pointer-events: auto; /* Re-enable for UI elements */
+        }
+
+        .hud-stat {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+    <!-- Game Container -->
+    <div id="game-container">
+        <!-- HUD -->
+        <div class="header-ui">
+            <div class="flex gap-4">
+                <div class="hud-stat" id="score-display"><i class="fa-solid fa-star text-yellow-400"></i> <span>0</span></div>
+                <div class="hud-stat" id="lives-display"><i class="fa-solid fa-heart text-red-500"></i> <span>3</span></div>
+            </div>
+
+            <!-- Autoplay Toggle -->
+            <div class="flex items-center">
+                <span class="mr-2 text-sm font-semibold text-mystic-200">Tự động chơi AI</span>
+                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                    <input type="checkbox" name="toggle" id="autoplay-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out z-10 top-0 left-0"/>
+                    <label for="autoplay-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
                 </div>
             </div>
         </div>
+        <canvas id="game-canvas"></canvas>
     </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <div class="glass-panel text-center p-8 m-4 max-w-md w-full">
+            <h1 class="text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-mystic-200 to-white drop-shadow-lg">Thu Thập Vận Khí</h1>
+            <p class="text-mystic-200 mb-8 max-w-sm mx-auto">Trượt ngón tay để di chuyển giỏ. Hứng những luồng khí tốt và tránh tà khí để xem quẻ bói của bạn!</p>
+            <button id="start-btn" class="btn-mystic">
+                <i class="fa-solid fa-play mr-2"></i> Bắt đầu
+            </button>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="screen hidden">
+        <div class="glass-panel text-center p-8 m-4 max-w-md w-full">
+            <h2 class="text-3xl font-bold mb-4 text-mystic-100">Quẻ Bói Của Bạn</h2>
+            <div class="text-6xl mb-4 text-yellow-400" id="final-score">0</div>
+            <p class="text-xl mb-6 font-semibold text-mystic-200" id="fortune-text">Đang luận giải...</p>
+            <button id="restart-btn" class="btn-mystic">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Thử Lại
+            </button>
+        </div>
+    </div>
+
     <script>
-        let selectedCards = [];
+        // --- GAME ENGINE & SETUP ---
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let GAME_WIDTH = window.innerWidth;
+        let GAME_HEIGHT = window.innerHeight;
+
+        function resizeCanvas() {
+            GAME_WIDTH = window.innerWidth;
+            GAME_HEIGHT = window.innerHeight;
+            canvas.width = GAME_WIDTH;
+            canvas.height = GAME_HEIGHT;
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (currentState === GameState.PLAYING) {
+                initGameLayout();
+            }
+        });
+        resizeCanvas();
+
+        // Game State
+        const GameState = {
+            MENU: 0,
+            PLAYING: 1,
+            GAMEOVER: 2
+        };
+
+        let currentState = GameState.MENU;
+        let lastTime = 0;
+        let animationId;
+
+        // Audio System (Web Audio API Synthesizer)
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'good') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now); // A4
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // Slide up to A5
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'bad') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.2); // Slide down
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'gameover') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            }
+        }
+
+        // Particle System
+        let particles = [];
+
+        function spawnParticles(x, y, color) {
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        function updateParticles(dt) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx * (dt/16);
+                p.y += p.vy * (dt/16);
+                p.life -= 0.05 * (dt/16);
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        function drawParticles() {
+            for (let p of particles) {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        // Game Constants & Variables
+        const NUM_LANES = 5;
+        let laneWidth;
+
         let score = 0;
+        let lives = 3;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
+        let player = {
+            lane: 2, // 0 to 4
+            width: 0,
+            height: 20,
+            y: 0
+        };
+
+        let items = [];
+        let spawnTimer = 0;
+        let spawnInterval = 1000;
+        let baseFallSpeed = 0.3; // pixels per ms
+
+        // UI Elements
+        const startScreen = document.getElementById('start-screen');
+        const scoreDisplay = document.querySelector('#score-display span');
+        const livesDisplay = document.querySelector('#lives-display span');
+        const finalScore = document.getElementById('final-score');
+        const resultScreen = document.getElementById('result-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        startBtn.addEventListener('click', () => {
+            startGame();
+        });
+
+        restartBtn.addEventListener('click', () => {
+            startGame();
+        });
+
+        function initGameLayout() {
+            laneWidth = GAME_WIDTH / NUM_LANES;
+            player.width = laneWidth * 0.8;
+            player.height = Math.max(GAME_HEIGHT * 0.05, 30);
+            player.y = GAME_HEIGHT - player.height - (GAME_HEIGHT * 0.1);
+        }
+
+        function startGame() {
+            initAudio(); // Initialize audio context on user gesture
+
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            currentState = GameState.PLAYING;
+            lastTime = performance.now();
+
+            // Reset game variables
+            score = 0;
+            lives = 3;
+            items = [];
+            particles = [];
+            spawnTimer = 0;
+            spawnInterval = 1000;
+            baseFallSpeed = 0.3;
+            player.lane = Math.floor(NUM_LANES / 2);
+
+            updateHUD();
+            initGameLayout();
+
+            if (animationId) cancelAnimationFrame(animationId);
+            gameLoop(performance.now());
+        }
+
+        function updateHUD() {
+            scoreDisplay.textContent = score;
+            livesDisplay.textContent = lives;
+        }
+
+        function getFortune(finalScore) {
+            if (finalScore < 50) {
+                return "Hung tinh chiếu mệnh. Cẩn trọng lời ăn tiếng nói và chú ý sức khoẻ trong tuần tới.";
+            } else if (finalScore < 150) {
+                return "Bình hoà. Mọi sự đều ở mức ổn định. Không có biến động lớn, hãy giữ vững tâm trí.";
+            } else if (finalScore < 300) {
+                return "Cát tinh cao chiếu. Sắp có tin vui về tài lộc hoặc tình duyên gõ cửa nhà bạn!";
+            } else {
+                return "Đại cát đại lợi! Vận khí đang lên cao trào, làm việc gì cũng xuôi chèo mát mái, thành công rực rỡ!";
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
+        }
+
+        function gameOver() {
+            playSound('gameover');
+            currentState = GameState.GAMEOVER;
+            finalScore.textContent = score;
+            document.getElementById('fortune-text').textContent = getFortune(score);
+            resultScreen.classList.remove('hidden');
+            cancelAnimationFrame(animationId);
+        }
+
+        function updateAutoplayAI() {
+            const autoplayEnabled = document.getElementById('autoplay-toggle').checked;
+            if (!autoplayEnabled) return;
+
+            // Simple heuristic AI:
+            // 1. Find the lowest item (closest to player).
+            // 2. If it's bad, avoid its lane.
+            // 3. If it's good, go to its lane.
+            // 4. Resolve conflicts by looking at other items.
+
+            let laneScores = [0, 0, 0, 0, 0];
+
+            // Evaluate all incoming items
+            for (let item of items) {
+                // If item is already past the player, ignore it
+                if (item.y > player.y + player.height) continue;
+
+                // Time to impact roughly
+                let dist = player.y - item.y;
+                if (dist < 0) dist = 0.1; // already colliding area
+
+                // Closer items have higher weight
+                let weight = 1000 / dist;
+
+                if (item.isGood) {
+                    laneScores[item.lane] += weight;
+                } else {
+                    // Huge negative penalty for bad items
+                    laneScores[item.lane] -= weight * 100;
+                }
+            }
+
+            // Find best lane
+            let bestLane = 2;
+            let bestScore = -Infinity;
+            for (let i = 0; i < NUM_LANES; i++) {
+                // Prefer staying in current lane if scores are equal (prevents jitter)
+                let scoreBoost = (i === player.lane) ? 0.1 : 0;
+                if (laneScores[i] + scoreBoost > bestScore) {
+                    bestScore = laneScores[i] + scoreBoost;
+                    bestLane = i;
+                }
+            }
+
+            // Smoothly interpolate lane or just snap (snapping is safer for "invincible" requirement)
+            player.lane = bestLane;
+        }
+
+        function update(dt) {
+            if (currentState !== GameState.PLAYING) return;
+
+            updateAutoplayAI();
+            updateParticles(dt);
+
+            // Difficulty curve
+            spawnInterval = Math.max(400, 1000 - score * 10);
+            let currentFallSpeed = baseFallSpeed + (score * 0.005);
+
+            // Spawning
+            spawnTimer += dt;
+            if (spawnTimer >= spawnInterval) {
+                spawnTimer = 0;
+                let lane = Math.floor(Math.random() * NUM_LANES);
+                // 70% good (score), 30% bad (damage)
+                let isGood = Math.random() < 0.7;
+                items.push({
+                    lane: lane,
+                    y: -50,
+                    radius: laneWidth * 0.3,
+                    isGood: isGood,
+                    speedMultiplier: isGood ? 1 : 1.2
+                });
+            }
+
+            // Update items & collision
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.y += currentFallSpeed * item.speedMultiplier * dt;
+
+                let itemX = (item.lane * laneWidth) + (laneWidth / 2);
+                let playerX = (player.lane * laneWidth) + (laneWidth / 2);
+
+                // Collision Detection (Circle to Rectangle roughly)
+                if (item.y + item.radius > player.y &&
+                    item.y - item.radius < player.y + player.height &&
+                    item.lane === player.lane) {
+
+                    if (item.isGood) {
+                        score += 10;
+                        playSound('good');
+                        spawnParticles(itemX, item.y, '#facc15');
                     } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+                        lives -= 1;
+                        playSound('bad');
+                        spawnParticles(itemX, item.y, '#ef4444');
                     }
-                }, 1000);
+                    updateHUD();
+                    items.splice(i, 1);
+
+                    if (lives <= 0) {
+                        gameOver();
+                    }
+                    continue;
+                }
+
+                // Off screen
+                if (item.y - item.radius > GAME_HEIGHT) {
+                    items.splice(i, 1);
+                }
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            if (currentState !== GameState.PLAYING) return;
+
+            // Draw Lanes (Optional visual aid)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for(let i=1; i<NUM_LANES; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * laneWidth, 0);
+                ctx.lineTo(i * laneWidth, GAME_HEIGHT);
+                ctx.stroke();
+            }
+
+            // Draw Player Basket
+            let pCenterX = (player.lane * laneWidth) + (laneWidth / 2);
+            let pLeft = pCenterX - (player.width / 2);
+
+            ctx.fillStyle = '#b49cfa'; // mystic-300
+            ctx.shadowColor = '#b49cfa';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.roundRect(pLeft, player.y, player.width, player.height, 10);
+            ctx.fill();
+            ctx.shadowBlur = 0; // reset
+
+            // Draw Items
+            for (let item of items) {
+                let itemX = (item.lane * laneWidth) + (laneWidth / 2);
+
+                ctx.beginPath();
+                ctx.arc(itemX, item.y, item.radius, 0, Math.PI * 2);
+
+                if (item.isGood) {
+                    ctx.fillStyle = '#facc15'; // yellow-400
+                    ctx.shadowColor = '#facc15';
+                } else {
+                    ctx.fillStyle = '#ef4444'; // red-500
+                    ctx.shadowColor = '#ef4444';
+                }
+
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            drawParticles();
+        }
+
+        function gameLoop(timestamp) {
+            let dt = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // Cap dt to prevent huge jumps if tab is inactive
+            if (dt > 100) dt = 100;
+
+            update(dt);
+            draw();
+
+            if (currentState === GameState.PLAYING) {
+                animationId = requestAnimationFrame(gameLoop);
             }
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        // Input Handling
+        function updatePlayerLaneFromX(clientX) {
+            let lane = Math.floor(clientX / laneWidth);
+            if (lane < 0) lane = 0;
+            if (lane >= NUM_LANES) lane = NUM_LANES - 1;
+            player.lane = lane;
+        }
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+        // Mouse Controls (for desktop testing)
+        canvas.addEventListener('mousemove', (e) => {
+            if (currentState === GameState.PLAYING && !document.getElementById('autoplay-toggle').checked) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                updatePlayerLaneFromX(x);
+            }
+        });
+
+        // Touch Controls (Mobile Safari/iPhone optimizations)
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Crucial for iOS scroll prevention
+            if (currentState === GameState.PLAYING && !document.getElementById('autoplay-toggle').checked) {
+                const touch = e.touches[0];
+                updatePlayerLaneFromX(touch.clientX);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Crucial for iOS scroll prevention
+            if (currentState === GameState.PLAYING && !document.getElementById('autoplay-toggle').checked) {
+                const touch = e.touches[0];
+                updatePlayerLaneFromX(touch.clientX);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        // Initial Draw (just clear)
+        draw();
+
     </script>
 </body>
 </html>
