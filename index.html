@@ -1,173 +1,568 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mèo Săn Chuột</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        body {
+            font-family: 'Poppins', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .card:hover {
-            transform: scale(1.05);
+
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+
+        .modal-glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
+
+        /* Animations */
+        @keyframes pulse-score {
+            0% { transform: scale(1); color: white; }
+            50% { transform: scale(1.3); color: #fde047; }
+            100% { transform: scale(1); color: white; }
         }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
+        .animate-score {
+            animation: pulse-score 0.4s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .btn-active:active {
+            transform: scale(0.95);
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+
+        /* D-Pad styles */
+        .dpad-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            border-radius: 50%;
+            transition: background 0.2s, transform 0.1s;
         }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+        .dpad-btn:active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.9);
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
+<body class="bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-800 min-h-screen flex flex-col items-center justify-center overflow-hidden text-white w-full h-full relative">
+
+    <!-- Main Game Container -->
+    <div class="glass w-full max-w-md p-4 rounded-3xl flex flex-col items-center relative z-10 mx-2 my-auto">
+
+        <!-- Header / Stats -->
+        <div class="w-full flex justify-between items-center mb-4 px-2">
+            <div class="flex flex-col">
+                <span class="text-xs uppercase tracking-wider opacity-75">Điểm</span>
+                <span id="scoreDisplay" class="text-3xl font-bold font-mono">0</span>
+            </div>
+            <div class="flex flex-col items-end">
+                <span class="text-xs uppercase tracking-wider opacity-75">Kỷ lục</span>
+                <span id="highScoreDisplay" class="text-xl font-bold font-mono text-yellow-300">0</span>
             </div>
         </div>
+
+        <!-- Canvas Container -->
+        <div id="canvasContainer" class="relative rounded-2xl overflow-hidden shadow-2xl bg-gray-900 border-2 border-white/20 w-full aspect-square">
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- Toast Notification (Absolute inside canvas container) -->
+            <div id="toast" class="absolute top-4 left-1/2 -translate-x-1/2 glass px-4 py-2 rounded-full text-sm font-semibold opacity-0 pointer-events-none transition-opacity duration-300 z-20">
+                +1 Điểm!
+            </div>
+        </div>
+
+        <!-- Mobile Controls (D-Pad) -->
+        <div class="mt-6 grid grid-cols-3 gap-2 w-48 mx-auto md:hidden">
+            <div></div>
+            <button class="dpad-btn w-14 h-14" id="btnUp" aria-label="Lên"><i class="fa-solid fa-chevron-up"></i></button>
+            <div></div>
+            <button class="dpad-btn w-14 h-14" id="btnLeft" aria-label="Trái"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="dpad-btn w-14 h-14" id="btnDown" aria-label="Xuống"><i class="fa-solid fa-chevron-down"></i></button>
+            <button class="dpad-btn w-14 h-14" id="btnRight" aria-label="Phải"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <div class="mt-4 text-xs opacity-60 text-center md:block hidden">
+            Dùng phím mũi tên hoặc WASD để di chuyển
+        </div>
     </div>
+
+    <!-- Start Modal -->
+    <div id="startModal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="modal-glass p-8 rounded-3xl max-w-sm w-full text-center animate-pop-in">
+            <div class="text-5xl mb-4">🐱🐭</div>
+            <h1 class="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-pink-400">Mèo Săn Chuột</h1>
+            <p class="mb-6 text-sm opacity-90">Điều khiển mèo bắt chuột.<br>Tránh những chú chó hung dữ!</p>
+
+            <div class="bg-white/10 rounded-xl p-4 mb-6 text-left text-sm">
+                <h3 class="font-semibold mb-2 border-b border-white/20 pb-1">Hướng dẫn:</h3>
+                <ul class="list-disc pl-4 space-y-1 opacity-90">
+                    <li>Vuốt, dùng D-Pad hoặc phím mũi tên để di chuyển.</li>
+                    <li>Bắt <span class="text-yellow-300">Chuột</span> để ghi điểm.</li>
+                    <li>Đụng trúng <span class="text-red-400">Chó</span> sẽ thua cuộc.</li>
+                </ul>
+            </div>
+
+            <button id="startBtn" class="w-full py-3 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all btn-active">
+                BẮT ĐẦU CHƠI
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md hidden">
+        <div class="modal-glass p-8 rounded-3xl max-w-sm w-full text-center">
+            <div class="text-5xl mb-4">😿</div>
+            <h2 class="text-3xl font-bold mb-2 text-red-400">Kết Thúc!</h2>
+
+            <div class="my-6 space-y-2">
+                <p class="text-lg">Điểm của bạn</p>
+                <p id="finalScore" class="text-5xl font-black text-white font-mono">0</p>
+            </div>
+
+            <div id="newRecordMsg" class="hidden mb-6 text-yellow-300 font-bold animate-bounce">
+                🎉 Kỷ lục mới! 🎉
+            </div>
+
+            <button id="restartBtn" class="w-full py-3 bg-gradient-to-r from-green-400 to-emerald-600 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all btn-active flex items-center justify-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> CHƠI LẠI
+            </button>
+        </div>
+    </div>
+
     <script>
-        let selectedCards = [];
+        // Constants
+        const TILE_COUNT = 15; // 15x15 grid
+        const FPS = 10;
+
+        // DOM Elements
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const startModal = document.getElementById('startModal');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const newRecordMsg = document.getElementById('newRecordMsg');
+        const toast = document.getElementById('toast');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        // Buttons
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const btnUp = document.getElementById('btnUp');
+        const btnDown = document.getElementById('btnDown');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+
+        // Game State
+        let tileSize = 0;
         let score = 0;
+        let highScore = localStorage.getItem('catMouseHighScore') || 0;
+        let gameLoop;
+        let isPlaying = false;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
+        // Entities
+        let cat = { x: 7, y: 7, dx: 0, dy: 0, lastX: 7, lastY: 7 };
+        let mouse = { x: 3, y: 3 };
+        let dogs = [];
+
+        // Audio Context setup (will be initialized on user interaction)
+        let audioCtx;
+        const initAudio = () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        };
+
+        const playTone = (frequency, type, duration, vol=0.1) => {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        };
+
+        // Resize handling
+        const resizeCanvas = () => {
+            const containerWidth = canvasContainer.clientWidth;
+            canvas.width = containerWidth;
+            canvas.height = containerWidth; // Square
+            tileSize = canvas.width / TILE_COUNT;
+            draw(); // Redraw if paused/stopped
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Initialization
+        highScoreDisplay.textContent = highScore;
+        resizeCanvas();
+
+        // Game Engine Core
+        const drawGrid = () => {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= TILE_COUNT; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * tileSize, 0);
+                ctx.lineTo(i * tileSize, canvas.height);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * tileSize);
+                ctx.lineTo(canvas.width, i * tileSize);
+                ctx.stroke();
+            }
+        };
+
+        const drawCat = () => {
+            // Highlight last move slightly
+            if (cat.lastX !== cat.x || cat.lastY !== cat.y) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(cat.lastX * tileSize, cat.lastY * tileSize, tileSize, tileSize);
+            }
+
+            ctx.fillStyle = '#f472b6'; // Pink
+            ctx.beginPath();
+            ctx.arc(cat.x * tileSize + tileSize/2, cat.y * tileSize + tileSize/2, tileSize/2.2, 0, Math.PI*2);
+            ctx.fill();
+
+            // Ears
+            ctx.beginPath();
+            ctx.moveTo(cat.x * tileSize + tileSize*0.2, cat.y * tileSize + tileSize*0.2);
+            ctx.lineTo(cat.x * tileSize + tileSize*0.1, cat.y * tileSize - tileSize*0.1);
+            ctx.lineTo(cat.x * tileSize + tileSize*0.4, cat.y * tileSize + tileSize*0.1);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(cat.x * tileSize + tileSize*0.8, cat.y * tileSize + tileSize*0.2);
+            ctx.lineTo(cat.x * tileSize + tileSize*0.9, cat.y * tileSize - tileSize*0.1);
+            ctx.lineTo(cat.x * tileSize + tileSize*0.6, cat.y * tileSize + tileSize*0.1);
+            ctx.fill();
+        };
+
+        const drawMouse = () => {
+            ctx.fillStyle = '#fde047'; // Yellow
+            ctx.beginPath();
+            ctx.arc(mouse.x * tileSize + tileSize/2, mouse.y * tileSize + tileSize/2, tileSize/3, 0, Math.PI*2);
+            ctx.fill();
+
+            // Tail
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(mouse.x * tileSize + tileSize/2, mouse.y * tileSize + tileSize*0.8);
+            ctx.lineTo(mouse.x * tileSize + tileSize*0.8, mouse.y * tileSize + tileSize*1.1);
+            ctx.stroke();
+        };
+
+        const drawDogs = () => {
+            ctx.fillStyle = '#f87171'; // Red
+            dogs.forEach(dog => {
+                ctx.fillRect(dog.x * tileSize + 2, dog.y * tileSize + 2, tileSize - 4, tileSize - 4);
+
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.fillRect(dog.x * tileSize + tileSize*0.2, dog.y * tileSize + tileSize*0.2, tileSize*0.2, tileSize*0.2);
+                ctx.fillRect(dog.x * tileSize + tileSize*0.6, dog.y * tileSize + tileSize*0.2, tileSize*0.2, tileSize*0.2);
+                ctx.fillStyle = '#f87171'; // Reset
+            });
+        };
+
+        const draw = () => {
+            // Clear canvas
+            ctx.fillStyle = '#111827'; // bg-gray-900
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawGrid();
+            drawMouse();
+            drawDogs();
+            drawCat();
+        };
+
+        const placeEntityRandomly = (entityArrayToAvoid = []) => {
+            let newX, newY;
+            let collision;
+            do {
+                collision = false;
+                newX = Math.floor(Math.random() * TILE_COUNT);
+                newY = Math.floor(Math.random() * TILE_COUNT);
+
+                if (newX === cat.x && newY === cat.y) collision = true;
+                if (newX === mouse.x && newY === mouse.y) collision = true;
+
+                for(let i = 0; i < entityArrayToAvoid.length; i++) {
+                    if (entityArrayToAvoid[i].x === newX && entityArrayToAvoid[i].y === newY) {
+                        collision = true;
+                        break;
                     }
-                }, 1000);
+                }
+            } while (collision);
+            return { x: newX, y: newY };
+        };
+
+        const gameOver = () => {
+            isPlaying = false;
+            playTone(150, 'sawtooth', 0.5, 0.2); // Fail sound
+
+            // Add shake animation
+            canvasContainer.classList.add('animate-shake');
+            setTimeout(() => canvasContainer.classList.remove('animate-shake'), 400);
+
+            // Update high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('catMouseHighScore', highScore);
+                highScoreDisplay.textContent = highScore;
+                newRecordMsg.classList.remove('hidden');
+            } else {
+                newRecordMsg.classList.add('hidden');
             }
-        }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+            finalScoreDisplay.textContent = score;
+            gameOverModal.classList.remove('hidden');
+        };
+
+        const showToast = (msg) => {
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 1000);
+        };
+
+        const update = () => {
+            if (!isPlaying) return;
+
+            // Save last position for highlighting
+            cat.lastX = cat.x;
+            cat.lastY = cat.y;
+
+            // Move Cat based on intent
+            if (cat.dx !== 0 || cat.dy !== 0) {
+                cat.x += cat.dx;
+                cat.y += cat.dy;
+
+                // Wrap around edges
+                if (cat.x < 0) cat.x = TILE_COUNT - 1;
+                if (cat.x >= TILE_COUNT) cat.x = 0;
+                if (cat.y < 0) cat.y = TILE_COUNT - 1;
+                if (cat.y >= TILE_COUNT) cat.y = 0;
+
+                playTone(400, 'sine', 0.05); // Move sound
+
+                // Reset velocity so it moves step-by-step
+                cat.dx = 0;
+                cat.dy = 0;
             }
-        }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+            // Check collision with mouse
+            if (cat.x === mouse.x && cat.y === mouse.y) {
+                score++;
+                scoreDisplay.textContent = score;
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
+                // Score animation
+                scoreDisplay.classList.add('animate-score');
+                setTimeout(() => scoreDisplay.classList.remove('animate-score'), 400);
+
+                showToast('+1 Điểm!');
+                playTone(800, 'square', 0.1, 0.1); // Success sound
+
+                // Move mouse
+                const newPos = placeEntityRandomly(dogs);
+                mouse.x = newPos.x;
+                mouse.y = newPos.y;
+
+                // Add dog every 5 points, max 10 dogs
+                if (score % 5 === 0 && dogs.length < 10) {
+                    dogs.push(placeEntityRandomly(dogs));
+                }
+
+                // Every 3 points move dogs randomly to make it harder
+                if(score % 3 === 0) {
+                   dogs.forEach(dog => {
+                       // simple random move 1 step
+                       const dirs = [{dx:0,dy:-1}, {dx:0,dy:1}, {dx:-1,dy:0}, {dx:1,dy:0}];
+                       const move = dirs[Math.floor(Math.random() * dirs.length)];
+                       let nx = dog.x + move.dx;
+                       let ny = dog.y + move.dy;
+                       if (nx >= 0 && nx < TILE_COUNT && ny >= 0 && ny < TILE_COUNT) {
+                           // rudimentary collision avoidance
+                           if(nx !== mouse.x && ny !== mouse.y) {
+                               dog.x = nx; dog.y = ny;
+                           }
+                       }
+                   });
+                }
+            }
+
+            // Check collision with dogs
+            for (let i = 0; i < dogs.length; i++) {
+                if (cat.x === dogs[i].x && cat.y === dogs[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+        };
+
+        const loop = () => {
+            if (isPlaying) {
+                update();
+            }
+            draw();
             setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+                requestAnimationFrame(loop);
+            }, 1000 / FPS);
+        };
+
+        const setDirection = (dx, dy) => {
+            if (!isPlaying) return;
+            initAudio();
+            cat.dx = dx;
+            cat.dy = dy;
+        };
+
+        const startGame = () => {
+            initAudio();
+            score = 0;
+            scoreDisplay.textContent = score;
+            cat = { x: 7, y: 7, dx: 0, dy: 0, lastX: 7, lastY: 7 };
+            dogs = [];
+
+            const mPos = placeEntityRandomly();
+            mouse.x = mPos.x;
+            mouse.y = mPos.y;
+
+            startModal.classList.add('hidden');
+            gameOverModal.classList.add('hidden');
+            isPlaying = true;
+        };
+
+        // Inputs
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        window.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    setDirection(0, -1);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    setDirection(0, 1);
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    setDirection(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    setDirection(1, 0);
+                    break;
+            }
+        });
+
+        // Mobile Controls
+        btnUp.addEventListener('pointerdown', (e) => { e.preventDefault(); setDirection(0, -1); });
+        btnDown.addEventListener('pointerdown', (e) => { e.preventDefault(); setDirection(0, 1); });
+        btnLeft.addEventListener('pointerdown', (e) => { e.preventDefault(); setDirection(-1, 0); });
+        btnRight.addEventListener('pointerdown', (e) => { e.preventDefault(); setDirection(1, 0); });
+
+        // Swipe Detection on Canvas
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            initAudio();
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (!isPlaying) return;
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        }, { passive: false });
+
+        const handleSwipe = (startX, startY, endX, endY) => {
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const absDx = Math.abs(dx);
+            const absDy = Math.abs(dy);
+
+            if (Math.max(absDx, absDy) > 30) { // Threshold
+                if (absDx > absDy) {
+                    if (dx > 0) setDirection(1, 0); // Right
+                    else setDirection(-1, 0); // Left
+                } else {
+                    if (dy > 0) setDirection(0, 1); // Down
+                    else setDirection(0, -1); // Up
+                }
+            }
+        };
+
+        // Prevent default touch actions on D-pad and canvas to avoid scrolling
+        document.querySelectorAll('.dpad-btn, canvas').forEach(el => {
+            el.addEventListener('contextmenu', e => e.preventDefault());
+        });
+
+        // Start Loop
+        requestAnimationFrame(loop);
+
     </script>
 </body>
 </html>
