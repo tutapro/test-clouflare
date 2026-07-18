@@ -2,25 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game mèo săn chuột</title>
     <script src='https://cdn.tailwindcss.com'></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        body {
+            background: linear-gradient(135deg, #f6d365, #fda085);
+            font-family: 'Poppins', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            margin: 0;
+            min-height: 100vh;
+        }
         .card {
             border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             cursor: pointer;
+            transform-style: preserve-3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: white;
         }
         .card:hover {
-            transform: scale(1.05);
+            transform: scale(1.1) translateY(-5px) rotateX(15deg);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
         }
         .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            transform: scale(1.15) translateZ(20px);
+            box-shadow: 0 0 15px rgba(255, 200, 0, 0.8);
         }
         .grid {
             display: grid;
@@ -29,7 +46,10 @@
         }
         .grid-item {
             padding: 20px;
-            background-color: #f7f7f7;
+            background-color: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             border-radius: 10px;
             display: flex;
             justify-content: center;
@@ -47,58 +67,121 @@
     </style>
 </head>
 <body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
+    <div class="confetti"></div>
+    <div class="flex h-screen w-screen items-center justify-center">
+        <div class="w-full max-w-lg px-4">
+            <div class="grid grid-cols-3 gap-4">
                 <div class="grid-item" id="card-1">
                     <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-2">
                     <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-3">
                     <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-4">
                     <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-5">
                     <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-6">
                     <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-7">
                     <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-8">
                     <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
                 <div class="grid-item" id="card-9">
                     <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+                        <div class="emoji text-4xl" style="pointer-events: none;">🐭</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <script>
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playScream() {
+            initAudio();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        function playSmile() {
+            initAudio();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const handleHover = () => {
+                    if (!card.classList.contains('active')) {
+                        const emoji = card.querySelector('.emoji');
+                        if (emoji) emoji.textContent = '🙀';
+                        playScream();
+                    }
+                };
+                const handleLeave = () => {
+                    if (!card.classList.contains('active')) {
+                        const emoji = card.querySelector('.emoji');
+                        if (emoji) emoji.textContent = '🐭';
+                    }
+                };
+                card.addEventListener('mouseenter', handleHover);
+                card.addEventListener('touchstart', handleHover);
+                card.addEventListener('mouseleave', handleLeave);
+                card.addEventListener('touchend', handleLeave);
+            });
+        });
+
         let selectedCards = [];
         let score = 0;
 
@@ -107,12 +190,15 @@
                 return;
             }
             card.classList.add('active');
+            const emoji = card.querySelector('.emoji');
+            if (emoji) emoji.textContent = '😺';
             selectedCards.push(card);
             if (selectedCards.length === 2) {
                 setTimeout(() => {
                     let card1 = selectedCards[0];
                     let card2 = selectedCards[1];
                     if (card1.id === card2.id) {
+                        playSmile();
                         card1.style.display = 'none';
                         card2.style.display = 'none';
                         score++;
@@ -120,6 +206,10 @@
                     } else {
                         card1.classList.remove('active');
                         card2.classList.remove('active');
+                        const emoji1 = card1.querySelector('.emoji');
+                        const emoji2 = card2.querySelector('.emoji');
+                        if (emoji1) emoji1.textContent = '🐭';
+                        if (emoji2) emoji2.textContent = '🐭';
                         selectedCards = [];
                     }
                 }, 1000);
