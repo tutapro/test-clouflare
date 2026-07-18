@@ -1,173 +1,470 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Rắn Săn Mồi</title>
     <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        body {
+            font-family: 'Poppins', sans-serif;
+            touch-action: none; /* Prevent scroll on touch devices */
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .card:hover {
-            transform: scale(1.05);
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+
+        #gameCanvas {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            display: block;
+            margin: 0 auto;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
+
+        /* Toggle Switch Custom CSS */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
         }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
         }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+        .toggle-checkbox {
+            right: 0;
+            z-index: 1;
+            border-color: #E2E8F0;
+            transition: all 0.3s;
+        }
+        .toggle-label {
+            width: 3rem;
+            height: 1.5rem;
+            background-color: #E2E8F0;
+            border-radius: 9999px;
+            transition: all 0.3s;
+        }
+
+        .toast {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
+<body class="h-screen w-screen flex flex-col items-center justify-center p-4">
+
+    <div id="toastMessage" class="toast">Game Over!</div>
+
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 flex flex-col items-center gap-4">
+        <!-- Header -->
+        <div class="w-full flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wider text-green-400">Rắn Săn Mồi</h1>
+            </div>
+            <div class="text-right">
+                <div class="text-sm opacity-80">Điểm: <span id="scoreValue" class="font-bold text-lg text-white">0</span></div>
+                <div class="text-xs opacity-60">Kỷ lục: <span id="highScoreValue">0</span></div>
             </div>
         </div>
-    </div>
-    <script>
-        let selectedCards = [];
-        let score = 0;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
+        <!-- Controls (Auto-play Toggle) -->
+        <div class="w-full flex justify-between items-center bg-white/5 rounded-lg p-3">
+            <span class="text-sm font-medium">Tự động chơi</span>
+            <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                <input type="checkbox" name="toggle" id="autoplayToggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                <label for="autoplayToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="relative w-full aspect-square max-w-[350px]">
+            <!-- Overlays could go here, e.g., pause screen -->
+            <canvas id="gameCanvas" width="300" height="300" class="w-full h-full"></canvas>
+
+            <div id="overlayStart" class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 rounded-xl backdrop-blur-sm z-10 cursor-pointer">
+                <i class="fas fa-play text-4xl text-green-400 mb-2"></i>
+                <p class="text-lg font-semibold">Chạm để bắt đầu</p>
+                <p class="text-xs opacity-70 mt-2">Vuốt để di chuyển</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('scoreValue');
+        const highScoreEl = document.getElementById('highScoreValue');
+        const overlayStart = document.getElementById('overlayStart');
+        const autoplayToggle = document.getElementById('autoplayToggle');
+        const toast = document.getElementById('toastMessage');
+
+        // Game Configuration
+        const gridSize = 15; // 20x20 grid roughly if 300/15
+        const tileCountX = canvas.width / gridSize;
+        const tileCountY = canvas.height / gridSize;
+        let speed = 7; // frames per second essentially
+        let lastRenderTime = 0;
+        let gameOver = false;
+        let gameStarted = false;
+        let isAutoPlaying = false;
+
+        let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        highScoreEl.innerText = highScore;
+
+        // Snake state
+        let snake = [];
+        let dx = 0;
+        let dy = 0;
+        let nextDx = 0;
+        let nextDy = 0;
+
+        // Food state
+        let foodX;
+        let foodY;
+
+        function initGame() {
+            snake = [
+                {x: Math.floor(tileCountX / 2), y: Math.floor(tileCountY / 2)}
+            ];
+            dx = 0;
+            dy = 0;
+            nextDx = 0;
+            nextDy = 0;
+            score = 0;
+            scoreEl.innerText = score;
+            gameOver = false;
+            gameStarted = true;
+            overlayStart.classList.add('hidden');
+            speed = 8;
+            placeFood();
+            window.requestAnimationFrame(main);
+        }
+
+        function showToast(msg) {
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Main game loop using requestAnimationFrame for smoother generic loop, but capped speed
+        function main(currentTime) {
+            if (gameOver) {
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('snakeHighScore', highScore);
+                    highScoreEl.innerText = highScore;
+                }
+                showToast("Game Over! Chạm để chơi lại");
+                overlayStart.classList.remove('hidden');
+                gameStarted = false;
                 return;
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+
+            window.requestAnimationFrame(main);
+
+            const secondsSinceLastRender = (currentTime - lastRenderTime) / 1000;
+            if (secondsSinceLastRender < 1 / speed) return;
+
+            lastRenderTime = currentTime;
+
+            update();
+            draw();
+        }
+
+        function update() {
+            if (isAutoPlaying) {
+                autoPlayTick();
+            } else {
+                dx = nextDx;
+                dy = nextDy;
+            }
+
+            // Only move if there is a direction
+            if (dx === 0 && dy === 0) return;
+
+            // Move snake
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+            // Check collision with walls
+            if (head.x < 0 || head.x >= tileCountX || head.y < 0 || head.y >= tileCountY) {
+                gameOver = true;
+                return;
+            }
+
+            // Check collision with self
+            for (let i = 0; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver = true;
+                    return;
+                }
+            }
+
+            snake.unshift(head);
+
+            // Check if food eaten
+            if (head.x === foodX && head.y === foodY) {
+                score++;
+                scoreEl.innerText = score;
+                speed = Math.min(20, speed + 0.2); // gradually increase speed
+                placeFood();
+            } else {
+                snake.pop(); // remove tail
+            }
+        }
+
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Food
+            ctx.fillStyle = '#f56565'; // Red-400
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#f56565';
+            ctx.beginPath();
+            ctx.arc(foodX * gridSize + gridSize/2, foodY * gridSize + gridSize/2, gridSize/2 - 2, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Draw Snake
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? '#48bb78' : '#68d391'; // Green-500 head, Green-400 body
+
+                // Add a slightly rounded rect logic
+                const x = snake[i].x * gridSize;
+                const y = snake[i].y * gridSize;
+                const size = gridSize - 1;
+                const radius = 4;
+
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + size - radius, y);
+                ctx.quadraticCurveTo(x + size, y, x + size, y + radius);
+                ctx.lineTo(x + size, y + size - radius);
+                ctx.quadraticCurveTo(x + size, y + size, x + size - radius, y + size);
+                ctx.lineTo(x + radius, y + size);
+                ctx.quadraticCurveTo(x, y + size, x, y + size - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function placeFood() {
+            let valid = false;
+            while (!valid) {
+                foodX = Math.floor(Math.random() * tileCountX);
+                foodY = Math.floor(Math.random() * tileCountY);
+                valid = true;
+                // Ensure food is not on snake
+                for (let part of snake) {
+                    if (part.x === foodX && part.y === foodY) {
+                        valid = false;
+                        break;
                     }
-                }, 1000);
+                }
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        // --- Swipe Controls ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: false});
+
+        document.addEventListener('touchmove', e => {
+            if (e.target.closest('#gameCanvas') || e.target === document.body) {
+                e.preventDefault(); // prevent scrolling
+            }
+        }, {passive: false});
+
+        document.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        }, {passive: false});
+
+        function handleSwipe(startX, startY, endX, endY) {
+            if (isAutoPlaying || !gameStarted) return;
+
+            const diffX = endX - startX;
+            const diffY = endY - startY;
+
+            // Need a minimum swipe distance to register
+            if (Math.abs(diffX) < 30 && Math.abs(diffY) < 30) return;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal swipe
+                if (diffX > 0 && dx === 0) {
+                    nextDx = 1; nextDy = 0; // Right
+                } else if (diffX < 0 && dx === 0) {
+                    nextDx = -1; nextDy = 0; // Left
+                }
+            } else {
+                // Vertical swipe
+                if (diffY > 0 && dy === 0) {
+                    nextDx = 0; nextDy = 1; // Down
+                } else if (diffY < 0 && dy === 0) {
+                    nextDx = 0; nextDy = -1; // Up
+                }
             }
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        // Desktop keyboard fallback for testing
+        document.addEventListener('keydown', e => {
+            if (isAutoPlaying || !gameStarted) return;
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (dy === 0) { nextDx = 0; nextDy = -1; }
+                    break;
+                case 'ArrowDown':
+                    if (dy === 0) { nextDx = 0; nextDy = 1; }
+                    break;
+                case 'ArrowLeft':
+                    if (dx === 0) { nextDx = -1; nextDy = 0; }
+                    break;
+                case 'ArrowRight':
+                    if (dx === 0) { nextDx = 1; nextDy = 0; }
+                    break;
+            }
+        });
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+        // UI Interactions
+        overlayStart.addEventListener('click', () => {
+            initGame();
+        });
+
+        autoplayToggle.addEventListener('change', (e) => {
+            isAutoPlaying = e.target.checked;
+            if (isAutoPlaying && !gameStarted) {
+                initGame();
+            }
+        });
+
+        // --- Auto Play Logic (Basic BFS) ---
+        function autoPlayTick() {
+            const head = snake[0];
+
+            // 1. Try to find path to food using BFS
+            let path = bfs(head, {x: foodX, y: foodY});
+
+            if (path && path.length > 0) {
+                let nextStep = path[0];
+                dx = nextStep.x - head.x;
+                dy = nextStep.y - head.y;
+            } else {
+                // 2. If no path to food, just find any safe move to survive
+                let safeMove = findSafeMove(head);
+                if (safeMove) {
+                    dx = safeMove.x;
+                    dy = safeMove.y;
+                } else {
+                    // Doomed
+                }
+            }
+        }
+
+        function isSafe(x, y) {
+            if (x < 0 || x >= tileCountX || y < 0 || y >= tileCountY) return false;
+            // Ignore the tail because it will move (unless we just ate food, but rough approx is fine)
+            for (let i = 0; i < snake.length - 1; i++) {
+                if (snake[i].x === x && snake[i].y === y) return false;
+            }
+            return true;
+        }
+
+        function bfs(start, goal) {
+            let queue = [{x: start.x, y: start.y, path: []}];
+            let visited = new Set();
+            visited.add(`${start.x},${start.y}`);
+
+            let directions = [
+                {dx: 0, dy: -1}, // Up
+                {dx: 1, dy: 0},  // Right
+                {dx: 0, dy: 1},  // Down
+                {dx: -1, dy: 0}  // Left
+            ];
+
+            // Order directions by roughly what keeps us alive / towards goal? BFS handles shortest path anyway.
+
+            while (queue.length > 0) {
+                let curr = queue.shift();
+
+                if (curr.x === goal.x && curr.y === goal.y) {
+                    return curr.path;
+                }
+
+                for (let dir of directions) {
+                    let nx = curr.x + dir.dx;
+                    let ny = curr.y + dir.dy;
+                    let key = `${nx},${ny}`;
+
+                    if (isSafe(nx, ny) && !visited.has(key)) {
+                        visited.add(key);
+                        let newPath = [...curr.path, {x: nx, y: ny}];
+                        queue.push({x: nx, y: ny, path: newPath});
+                    }
+                }
+            }
+            return null; // No path found
+        }
+
+        function findSafeMove(head) {
+            let directions = [
+                {x: 0, y: -1}, {x: 1, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}
+            ];
+            // Don't reverse direction directly if snake > 1
+            let validDirs = directions;
+            if (snake.length > 1 && (dx !== 0 || dy !== 0)) {
+                validDirs = directions.filter(d => !(d.x === -dx && d.y === -dy));
+            }
+
+            for (let dir of validDirs) {
+                if (isSafe(head.x + dir.x, head.y + dir.y)) {
+                    return dir;
+                }
+            }
+            return null;
+        }
+
+        // Initial draw
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0,0, canvas.width, canvas.height);
     </script>
 </body>
 </html>
