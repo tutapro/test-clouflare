@@ -1,173 +1,547 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tính Tiền Quán Ăn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
+        body {
+            font-family: 'Poppins', sans-serif;
+            touch-action: none; /* Prevent browser handling of gestures */
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .card:hover {
-            transform: scale(1.05);
+        .glass {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        /* AI Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4ade80;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4ade80;
         }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .toggle-checkbox {
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
         }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+
+        /* Keyframe animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
+<body class="bg-gradient-to-br from-blue-900 via-purple-800 to-indigo-900 h-screen w-screen flex flex-col items-center justify-center text-white m-0 p-0">
+
+    <!-- Header UI (Glassmorphism) -->
+    <div class="absolute top-0 w-full p-4 flex justify-between items-center z-10 glass shadow-2xl max-w-md mx-auto left-0 right-0 rounded-b-3xl">
+        <div class="flex items-center space-x-3">
+            <div class="bg-white/20 p-2 rounded-full backdrop-blur-md">
+                <i class="fas fa-store text-yellow-300 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold leading-tight">Quán Ăn</h1>
+                <p class="text-sm font-medium text-gray-200">Thu: <span id="score" class="font-bold text-green-400 text-lg">0</span> đ</p>
+            </div>
+        </div>
+
+        <!-- Toggle Switch for AI -->
+        <div class="flex items-center flex-col mr-1">
+            <span class="text-[10px] font-bold mb-1 uppercase tracking-wider text-green-300"><i class="fas fa-robot mr-1"></i> Tự động chơi</span>
+            <div class="relative inline-block w-14 h-7 align-middle select-none transition duration-200 ease-in">
+                <input type="checkbox" name="toggle" id="ai-toggle" class="toggle-checkbox absolute block w-7 h-7 rounded-full bg-white border-4 border-gray-300 appearance-none cursor-pointer z-10 top-0 left-0 shadow-md"/>
+                <label for="ai-toggle" class="toggle-label block overflow-hidden h-7 rounded-full bg-gray-400 cursor-pointer shadow-inner transition-colors duration-300"></label>
             </div>
         </div>
     </div>
+
+    <!-- Game Area -->
+    <div id="game-container" class="relative w-full h-full max-w-md mx-auto overflow-hidden bg-black/40 shadow-2xl">
+        <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- Modal for Game Over -->
+    <div id="game-over-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+        <div class="glass p-8 rounded-3xl text-center max-w-xs w-11/12 shadow-[0_0_40px_rgba(0,0,0,0.5)] animate-fade-in border border-white/20">
+            <div class="bg-red-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 animate-float">
+                <i class="fas fa-bomb text-5xl text-red-400"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">Bùmmm!</h2>
+            <p class="text-gray-300 mb-4 text-sm font-medium">Bạn đã bắt nhầm bom hẹn giờ.</p>
+
+            <div class="bg-black/30 rounded-2xl p-4 mb-6 border border-white/10">
+                <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">Tổng Doanh Thu</p>
+                <p class="text-2xl font-bold text-green-400"><span id="final-score"></span> đ</p>
+            </div>
+
+            <button id="restart-btn" class="bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(52,211,106,0.4)] transform transition-all hover:scale-105 active:scale-95 w-full flex items-center justify-center space-x-2 text-lg">
+                <i class="fas fa-redo-alt"></i>
+                <span>Chơi Lại</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Instructions Toast -->
+    <div id="toast" class="absolute bottom-24 left-1/2 transform -translate-x-1/2 glass px-6 py-3 rounded-2xl shadow-xl transition-opacity duration-1000 opacity-100 z-20 pointer-events-none text-sm text-center w-4/5 max-w-sm border border-white/20 text-white font-medium">
+        <i class="fas fa-hand-pointer text-yellow-300 mr-2"></i> Vuốt để di chuyển khay<br>Hứng tiền, né bom!
+    </div>
+
     <script>
-        let selectedCards = [];
+        // Adjust toggle CSS via JS for smooth transition
+        const toggleCheckbox = document.getElementById('ai-toggle');
+        toggleCheckbox.addEventListener('change', function() {
+            if(this.checked) {
+                this.style.transform = 'translateX(100%)';
+                this.style.borderColor = '#4ade80';
+                this.nextElementSibling.classList.replace('bg-gray-400', 'bg-green-500');
+            } else {
+                this.style.transform = 'translateX(0)';
+                this.style.borderColor = '#d1d5db';
+                this.nextElementSibling.classList.replace('bg-green-500', 'bg-gray-400');
+            }
+        });
+
+        // Hide toast after 4 seconds
+        setTimeout(() => {
+            document.getElementById('toast').classList.replace('opacity-100', 'opacity-0');
+        }, 4000);
+
+        // Game Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('game-container');
+
+        let width, height;
+
+        function resizeCanvas() {
+            width = container.clientWidth;
+            height = container.clientHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game State
         let score = 0;
+        let isGameOver = false;
+        let aiEnabled = false;
+        let animationFrameId;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
-                return;
+        toggleCheckbox.addEventListener('change', (e) => {
+            aiEnabled = e.target.checked;
+        });
+
+        // Player (Tray/Cashier)
+        const player = {
+            width: 90,
+            height: 25,
+            x: width / 2 - 45,
+            y: height - 100,
+            targetX: width / 2 - 45
+        };
+
+        // Items
+        const items = [];
+        const itemTypes = [
+            { type: 'money', value: 10, color: '#facc15', radius: 18, speed: 3.5, label: '10k' },
+            { type: 'money', value: 50, color: '#60a5fa', radius: 20, speed: 4, label: '50k' },
+            { type: 'money', value: 100, color: '#4ade80', radius: 22, speed: 4.5, label: '100k' },
+            { type: 'money', value: 500, color: '#f87171', radius: 25, speed: 5.5, label: '500k' },
+            { type: 'bomb', value: 0, color: '#1f2937', radius: 20, speed: 4.5, label: '' }
+        ];
+
+        let spawnTimer = 0;
+        let spawnInterval = 55; // frames
+
+        function spawnItem() {
+            // Adjust probability: 20% bomb, 80% money
+            let isBomb = Math.random() < 0.2;
+            let randomType;
+            if (isBomb) {
+                randomType = itemTypes[4];
+            } else {
+                let m = Math.random();
+                if (m < 0.5) randomType = itemTypes[0];
+                else if (m < 0.8) randomType = itemTypes[1];
+                else if (m < 0.95) randomType = itemTypes[2];
+                else randomType = itemTypes[3];
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
+
+            const x = Math.random() * (width - randomType.radius * 2) + randomType.radius;
+            items.push({
+                type: randomType.type,
+                value: randomType.value,
+                color: randomType.color,
+                radius: randomType.radius,
+                label: randomType.label,
+                x: x,
+                y: -randomType.radius,
+                speedY: randomType.speed + Math.random() * 1.5 + (score / 5000) // gets faster over time
+            });
+        }
+
+        // --- MOBILE SWIPE CONTROLS ---
+        let touchStartX = 0;
+        let playerStartX = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Meticulously block iOS/Safari default window scrolling
+            if(isGameOver || aiEnabled) return;
+            touchStartX = e.touches[0].clientX;
+            playerStartX = player.x;
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Block pull-to-refresh and scroll
+            if(isGameOver || aiEnabled) return;
+            const touchX = e.touches[0].clientX;
+            const dx = touchX - touchStartX;
+            player.targetX = playerStartX + dx;
+
+            // Constrain within screen
+            if (player.targetX < 0) player.targetX = 0;
+            if (player.targetX > width - player.width) player.targetX = width - player.width;
+            player.x = player.targetX;
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        // Mouse controls for testing
+        let isMouseDown = false;
+        canvas.addEventListener('mousedown', (e) => {
+            if(isGameOver || aiEnabled) return;
+            isMouseDown = true;
+            touchStartX = e.clientX;
+            playerStartX = player.x;
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if(!isMouseDown || isGameOver || aiEnabled) return;
+            const dx = e.clientX - touchStartX;
+            player.targetX = playerStartX + dx;
+            if (player.targetX < 0) player.targetX = 0;
+            if (player.targetX > width - player.width) player.targetX = width - player.width;
+            player.x = player.targetX;
+        });
+        window.addEventListener('mouseup', () => isMouseDown = false);
+
+        // --- INVINCIBLE AUTOPLAY AI ---
+        function updateAI() {
+            if (!aiEnabled) return;
+
+            let targetX = player.x + player.width / 2; // Center of player
+
+            // Filter items that are above player and falling down
+            let upcomingItems = [...items].filter(item => item.y + item.radius < player.y + player.height);
+
+            // Sort by time-to-impact (lowest Y relative to speed)
+            upcomingItems.sort((a, b) => {
+                let timeA = (player.y - (a.y + a.radius)) / a.speedY;
+                let timeB = (player.y - (b.y + b.radius)) / b.speedY;
+                return timeA - timeB;
+            });
+
+            let urgentBomb = null;
+            let urgentMoney = null;
+
+            // AI determines threats and targets
+            for (let item of upcomingItems) {
+                let timeToReach = (player.y - (item.y + item.radius)) / item.speedY;
+                if (timeToReach < 0) continue;
+
+                if (item.type === 'bomb') {
+                    // If bomb is close (within 80 frames), it's an urgent threat
+                    if (timeToReach < 80) {
+                        urgentBomb = item;
+                        break; // Always prioritize dodging the most imminent bomb
                     }
-                }, 1000);
+                } else if (item.type === 'money') {
+                    if (!urgentMoney) urgentMoney = item;
+                }
+            }
+
+            // Execute AI movement
+            if (urgentBomb) {
+                // Determine collision prediction
+                let willHit = false;
+                if (urgentBomb.x + urgentBomb.radius > player.x - 10 &&
+                    urgentBomb.x - urgentBomb.radius < player.x + player.width + 10) {
+                    willHit = true;
+                }
+
+                if (willHit) {
+                    // Evade to the safest side
+                    let spaceLeft = urgentBomb.x - urgentBomb.radius;
+                    let spaceRight = width - (urgentBomb.x + urgentBomb.radius);
+
+                    if (player.x + player.width / 2 < urgentBomb.x) {
+                        targetX = urgentBomb.x - urgentBomb.radius - player.width / 2 - 20;
+                        if (targetX - player.width / 2 < 0) {
+                            targetX = urgentBomb.x + urgentBomb.radius + player.width / 2 + 20;
+                        }
+                    } else {
+                        targetX = urgentBomb.x + urgentBomb.radius + player.width / 2 + 20;
+                        if (targetX + player.width / 2 > width) {
+                            targetX = urgentBomb.x - urgentBomb.radius - player.width / 2 - 20;
+                        }
+                    }
+                } else {
+                    // It won't hit, we can safely target money if available
+                    if (urgentMoney) targetX = urgentMoney.x;
+                }
+            } else if (urgentMoney) {
+                // Safe to catch money
+                targetX = urgentMoney.x;
+            }
+
+            // Constrain AI target
+            let pX = targetX - player.width / 2;
+            if (pX < 0) pX = 0;
+            if (pX > width - player.width) pX = width - player.width;
+
+            // Move player with rapid smooth interpolation (Invincible reflexes)
+            player.x += (pX - player.x) * 0.45;
+        }
+
+        // Rendering Functions
+        function drawPlayer() {
+            // Draw glow
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(74, 222, 128, 0.5)';
+            if(aiEnabled) {
+                ctx.shadowColor = 'rgba(56, 189, 248, 0.8)'; // Blue glow when AI active
+            }
+
+            // Tray Base
+            ctx.fillStyle = aiEnabled ? '#38bdf8' : '#4ade80'; // Sky-400 for AI, Green-400 for manual
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y, player.width, player.height, 12);
+            ctx.fill();
+
+            ctx.shadowBlur = 0; // reset
+
+            // Tray Inner Detail (Glassy look)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.roundRect(player.x + 4, player.y + 4, player.width - 8, player.height - 12, 8);
+            ctx.fill();
+        }
+
+        function drawItems() {
+            for (let item of items) {
+                if (item.type === 'money') {
+                    // Coin background
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = item.color;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = item.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    // Inner circle
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.radius - 4, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Text
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 11px Poppins';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(item.label, item.x, item.y + 1);
+                } else if (item.type === 'bomb') {
+                    // Bomb Body
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = item.color;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = 'rgba(239, 68, 68, 0.6)';
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    // Wick cap
+                    ctx.fillStyle = '#9ca3af';
+                    ctx.fillRect(item.x - 4, item.y - item.radius - 4, 8, 6);
+
+                    // Spark
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y - item.radius - 5, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Highlight
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                    ctx.beginPath();
+                    ctx.arc(item.x - 6, item.y - 6, 6, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Skull symbol
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px "Font Awesome 5 Free"';
+                    ctx.fontWeight = '900';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('\uf00d', item.x, item.y + 1); // fa-times
+                }
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        function updateItems() {
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.y += item.speedY;
+
+                // Collision Detection
+                // Using circular bounding box for item, rectangular for player
+                let closestX = Math.max(player.x, Math.min(item.x, player.x + player.width));
+                let closestY = Math.max(player.y, Math.min(item.y, player.y + player.height));
+
+                let distanceX = item.x - closestX;
+                let distanceY = item.y - closestY;
+                let distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+                if (distanceSquared < (item.radius * item.radius)) {
+                    // Collision!
+                    if (item.type === 'money') {
+                        score += item.value;
+                        document.getElementById('score').innerText = score;
+                        playPop();
+                    } else if (item.type === 'bomb') {
+                        triggerGameOver();
+                    }
+                    items.splice(i, 1);
+                    continue;
+                }
+
+                // Remove out of bounds
+                if (item.y - item.radius > height) {
+                    items.splice(i, 1);
+                }
             }
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        // Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+        function playPop() {
+            if(audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playExplosion() {
+            if(audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        // Unlock audio on interaction
+        ['touchstart', 'click'].forEach(evt => {
+            document.body.addEventListener(evt, () => {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            }, { once: true });
+        });
+
+        function triggerGameOver() {
+            isGameOver = true;
+            playExplosion();
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('game-over-modal').classList.remove('hidden');
+        }
+
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            score = 0;
+            document.getElementById('score').innerText = score;
+            items.length = 0;
+            spawnTimer = 0;
+            spawnInterval = 55;
+            isGameOver = false;
+            document.getElementById('game-over-modal').classList.add('hidden');
+            player.x = width / 2 - player.width / 2;
+            player.targetX = player.x;
+            gameLoop();
+        });
+
+        function gameLoop() {
+            if (isGameOver) return;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            updateAI();
+
+            spawnTimer++;
+            if (spawnTimer >= spawnInterval) {
+                spawnItem();
+                spawnTimer = 0;
+                // Ramp up difficulty
+                if (spawnInterval > 25) spawnInterval -= 0.5;
+            }
+
+            updateItems();
+            drawItems();
+            drawPlayer();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // Start
+        window.onload = () => {
+            player.y = height - 100;
+            gameLoop();
+        };
+
+        // Save score to memory
+        window.addEventListener('beforeunload', () => {
+            let hs = localStorage.getItem('restaurantScore') || 0;
+            if(score > hs) localStorage.setItem('restaurantScore', score);
+        });
+
     </script>
 </body>
 </html>
