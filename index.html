@@ -1,173 +1,445 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mèo Săn Chuột</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .card:hover {
-            transform: scale(1.05);
-        }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
-        }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
+        body {
+            font-family: 'Poppins', sans-serif;
+            touch-action: none; /* Prevent scroll/zoom */
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            min-height: 100vh;
+            overflow: hidden;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+
+        .glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        /* Keyframe animations */
+        @keyframes pulse-score {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: #e11d48; }
+            100% { transform: scale(1); }
+        }
+        .animate-pulse-score {
+            animation: pulse-score 0.3s ease-in-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .btn-pop:active {
+            animation: pop 0.2s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.5s;
+        }
+
+        canvas {
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .d-pad-btn {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #333;
+            user-select: none;
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .d-pad-btn:active {
+            background: rgba(255, 255, 255, 0.7);
+            transform: scale(0.9);
+        }
+
+        #modal {
+            transition: opacity 0.3s ease;
+        }
+        .hidden-modal {
+            opacity: 0;
+            pointer-events: none;
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
-                </div>
+<body class="text-gray-800">
+    <div id="game-container" class="glass rounded-3xl p-4 sm:p-6 flex flex-col items-center w-[95vw] max-w-md">
+        <!-- HUD -->
+        <div class="w-full flex justify-between items-center mb-4 px-2">
+            <div class="text-lg sm:text-xl font-bold bg-white/40 px-4 py-1 rounded-full shadow-sm">
+                Điểm: <span id="score" class="inline-block transition-transform">0</span>
+            </div>
+            <div class="text-sm sm:text-base font-semibold bg-white/40 px-3 py-1 rounded-full shadow-sm">
+                Đỉnh: <span id="high-score">0</span>
             </div>
         </div>
-    </div>
-    <script>
-        let selectedCards = [];
-        let score = 0;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
+        <!-- Timer bar -->
+        <div class="w-full h-3 bg-white/30 rounded-full mb-3 overflow-hidden shadow-inner">
+            <div id="timer-bar" class="h-full bg-red-400 w-full transition-all duration-100 linear"></div>
+        </div>
+
+        <!-- Canvas -->
+        <canvas id="gameCanvas" width="300" height="300" class="mb-4"></canvas>
+
+        <!-- Controls -->
+        <div class="grid grid-cols-3 gap-2 mb-2 w-48 mx-auto">
+            <div></div>
+            <button class="d-pad-btn btn-pop" id="btn-up"><i class="fas fa-chevron-up"></i></button>
+            <div></div>
+            <button class="d-pad-btn btn-pop" id="btn-left"><i class="fas fa-chevron-left"></i></button>
+            <button class="d-pad-btn btn-pop" id="btn-down"><i class="fas fa-chevron-down"></i></button>
+            <button class="d-pad-btn btn-pop" id="btn-right"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="glass rounded-2xl p-8 max-w-sm w-[90%] text-center shadow-2xl transform transition-transform">
+            <h1 id="modal-title" class="text-3xl font-bold mb-2 text-gray-800 drop-shadow-md">Mèo Săn Chuột</h1>
+            <p id="modal-desc" class="text-gray-700 mb-6 font-medium">Vuốt hoặc dùng phím để điều khiển mèo bắt chuột!</p>
+            <p id="modal-score" class="text-2xl font-bold text-red-500 mb-6 hidden">Điểm: <span id="final-score">0</span></p>
+            <button id="btn-start" class="w-full bg-gradient-to-r from-orange-400 to-red-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all btn-pop">
+                Bắt đầu chơi
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-2 rounded-full shadow-lg font-semibold transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+        Kỷ lục mới!
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('high-score');
+        const timerBar = document.getElementById('timer-bar');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+        const modalScore = document.getElementById('modal-score');
+        const finalScoreEl = document.getElementById('final-score');
+        const btnStart = document.getElementById('btn-start');
+        const toast = document.getElementById('toast');
+
+        // Game Constants
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        const initialTime = 10000; // 10 seconds
+
+        // Game State
+        let cat = { x: 10, y: 10 };
+        let mouse = { x: 5, y: 5 };
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let highScore = localStorage.getItem('catHuntHighScore') || 0;
+        let timeLeft = initialTime;
+        let lastTime = 0;
+        let gameLoopId = null;
+        let isPlaying = false;
+        let lastMoveTime = 0;
+        const moveInterval = 150; // ms per move
+
+        highScoreEl.innerText = highScore;
+
+        function initGame() {
+            cat = { x: Math.floor(tileCount / 2), y: Math.floor(tileCount / 2) };
+            placeMouse();
+            dx = 0;
+            dy = 0;
+            score = 0;
+            timeLeft = initialTime;
+            scoreEl.innerText = score;
+            isPlaying = true;
+            modal.classList.add('hidden-modal');
+            modalScore.classList.add('hidden');
+            lastTime = performance.now();
+            lastMoveTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function placeMouse() {
+            mouse.x = Math.floor(Math.random() * tileCount);
+            mouse.y = Math.floor(Math.random() * tileCount);
+            // Ensure mouse isn't on cat
+            if (mouse.x === cat.x && mouse.y === cat.y) {
+                placeMouse();
+            }
+        }
+
+        function update(currentTime) {
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+
+            if (!isPlaying) return;
+
+            // Timer logic
+            timeLeft -= deltaTime;
+            const timePercentage = Math.max(0, (timeLeft / initialTime) * 100);
+            timerBar.style.width = `${timePercentage}%`;
+
+            if (timeLeft <= 0) {
+                gameOver();
                 return;
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
-                    }
-                }, 1000);
+
+            // Movement logic
+            if (currentTime - lastMoveTime > moveInterval) {
+                cat.x += dx;
+                cat.y += dy;
+
+                // Wrap around grid
+                if (cat.x < 0) cat.x = tileCount - 1;
+                if (cat.x >= tileCount) cat.x = 0;
+                if (cat.y < 0) cat.y = tileCount - 1;
+                if (cat.y >= tileCount) cat.y = 0;
+
+                // Collision detection
+                if (cat.x === mouse.x && cat.y === mouse.y) {
+                    playSound('catch');
+                    score++;
+                    scoreEl.innerText = score;
+
+                    // Add time, max out at initialTime
+                    timeLeft = Math.min(initialTime, timeLeft + 2000);
+
+                    // Animation
+                    scoreEl.classList.remove('animate-pulse-score');
+                    void scoreEl.offsetWidth; // trigger reflow
+                    scoreEl.classList.add('animate-pulse-score');
+
+                    placeMouse();
+                }
+                lastMoveTime = currentTime;
             }
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Mouse
+            ctx.fillStyle = '#9ca3af'; // Gray mouse
+            ctx.beginPath();
+            ctx.arc(mouse.x * gridSize + gridSize/2, mouse.y * gridSize + gridSize/2, gridSize/2 - 2, 0, Math.PI * 2);
+            ctx.fill();
+            // Mouse ears
+            ctx.beginPath();
+            ctx.arc(mouse.x * gridSize + 4, mouse.y * gridSize + 4, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(mouse.x * gridSize + gridSize - 4, mouse.y * gridSize + 4, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Cat
+            ctx.fillStyle = '#f97316'; // Orange cat
+            ctx.fillRect(cat.x * gridSize + 1, cat.y * gridSize + 1, gridSize - 2, gridSize - 2);
+            // Cat ears
+            ctx.beginPath();
+            ctx.moveTo(cat.x * gridSize, cat.y * gridSize);
+            ctx.lineTo(cat.x * gridSize + 6, cat.y * gridSize);
+            ctx.lineTo(cat.x * gridSize, cat.y * gridSize - 6);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cat.x * gridSize + gridSize, cat.y * gridSize);
+            ctx.lineTo(cat.x * gridSize + gridSize - 6, cat.y * gridSize);
+            ctx.lineTo(cat.x * gridSize + gridSize, cat.y * gridSize - 6);
+            ctx.fill();
+        }
+
+        function gameLoop(currentTime) {
+            update(currentTime);
+            draw();
+            if (isPlaying) {
+                gameLoopId = requestAnimationFrame(gameLoop);
             }
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        function gameOver() {
+            isPlaying = false;
+            playSound('gameover');
+            document.getElementById('game-container').classList.add('animate-shake');
+            setTimeout(() => document.getElementById('game-container').classList.remove('animate-shake'), 500);
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
+            modalTitle.innerText = "Hết Giờ!";
+            modalDesc.innerText = "Mèo của bạn đã mệt rồi.";
+            finalScoreEl.innerText = score;
+            modalScore.classList.remove('hidden');
+            btnStart.innerText = "Chơi lại";
+            modal.classList.remove('hidden-modal');
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('catHuntHighScore', highScore);
+                highScoreEl.innerText = highScore;
+                showToast();
+            }
+        }
+
+        function showToast() {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translate(-50%, 0)';
             setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, -20px)';
+            }, 3000);
+        }
+
+        // --- Audio System ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'move') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.05);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            } else if (type === 'catch') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.05);
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } else if (type === 'gameover') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // --- Input Handling ---
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W':
+                    if (dy !== 1) { dx = 0; dy = -1; playSound('move'); }
+                    break;
+                case 'ArrowDown': case 's': case 'S':
+                    if (dy !== -1) { dx = 0; dy = 1; playSound('move'); }
+                    break;
+                case 'ArrowLeft': case 'a': case 'A':
+                    if (dx !== 1) { dx = -1; dy = 0; playSound('move'); }
+                    break;
+                case 'ArrowRight': case 'd': case 'D':
+                    if (dx !== -1) { dx = 1; dy = 0; playSound('move'); }
+                    break;
+            }
+        });
+
+        // D-Pad
+        const handleDpad = (dir) => {
+            if (!isPlaying) return;
+            switch(dir) {
+                case 'up': if (dy !== 1) { dx = 0; dy = -1; playSound('move'); } break;
+                case 'down': if (dy !== -1) { dx = 0; dy = 1; playSound('move'); } break;
+                case 'left': if (dx !== 1) { dx = -1; dy = 0; playSound('move'); } break;
+                case 'right': if (dx !== -1) { dx = 1; dy = 0; playSound('move'); } break;
+            }
+        };
+
+        // Prevent default touch behaviors on D-pad to avoid double firing
+        const bindDpad = (id, dir) => {
+            const el = document.getElementById(id);
+            el.addEventListener('mousedown', (e) => { e.preventDefault(); handleDpad(dir); });
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); handleDpad(dir); }, {passive: false});
+        };
+
+        bindDpad('btn-up', 'up');
+        bindDpad('btn-down', 'down');
+        bindDpad('btn-left', 'left');
+        bindDpad('btn-right', 'right');
+
+        // Swipe (on canvas)
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: true});
+
+        canvas.addEventListener('touchend', (e) => {
+            if (!isPlaying) return;
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+
+            let dxSwipe = touchEndX - touchStartX;
+            let dySwipe = touchEndY - touchStartY;
+
+            if (Math.abs(dxSwipe) > Math.abs(dySwipe)) {
+                // Horizontal
+                if (Math.abs(dxSwipe) > 30) {
+                    if (dxSwipe > 0 && dx !== -1) { dx = 1; dy = 0; playSound('move'); }
+                    else if (dxSwipe < 0 && dx !== 1) { dx = -1; dy = 0; playSound('move'); }
+                }
+            } else {
+                // Vertical
+                if (Math.abs(dySwipe) > 30) {
+                    if (dySwipe > 0 && dy !== -1) { dx = 0; dy = 1; playSound('move'); }
+                    else if (dySwipe < 0 && dy !== 1) { dx = 0; dy = -1; playSound('move'); }
+                }
+            }
+        }, {passive: true});
+
+        // Start Button
+        btnStart.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            initGame();
+        });
+
+        // Initial Draw
+        draw();
     </script>
 </body>
 </html>
