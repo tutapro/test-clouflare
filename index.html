@@ -1,173 +1,352 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pikachu Connect</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Công cụ Tính Lương - Salary Calculator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        .card {
-            border-radius: 10px;
-            transition: transform 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .card:hover {
-            transform: scale(1.05);
-        }
-        .active {
-            transform: scale(1.1);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-gap: 10px;
-        }
-        .grid-item {
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
+        body {
+            background: linear-gradient(135deg, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            font-family: 'Inter', sans-serif;
         }
-        .confetti {
-            position: fixed;
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .input-glass {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(200, 200, 200, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .input-glass:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .animated-bg {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #f7f7f7;
-            display: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            filter: blur(60px);
+            opacity: 0.6;
+            animation: move 10s infinite alternate;
+        }
+
+        .blob-1 { top: -10%; left: -10%; width: 300px; height: 300px; background: #ff9a9e; animation-delay: 0s; }
+        .blob-2 { bottom: -10%; right: -10%; width: 400px; height: 400px; background: #a18cd1; animation-delay: 2s; }
+        .blob-3 { top: 40%; left: 40%; width: 250px; height: 250px; background: #fbc2eb; animation-delay: 4s; }
+
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(20px, -20px) scale(1.1); }
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
-    <div class="grid h-screen w-screen place-items-center">
-        <div class="grid w-1/2">
-            <div class="grid grid-cols-4 gap-4">
-                <div class="grid-item" id="card-1">
-                    <div class="card" id="card-1" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+<body class="text-gray-800 antialiased relative">
+
+    <div class="animated-bg">
+        <div class="blob blob-1 rounded-full"></div>
+        <div class="blob blob-2 rounded-full"></div>
+        <div class="blob blob-3 rounded-full"></div>
+    </div>
+
+    <div class="w-full max-w-5xl mx-auto glass-panel overflow-hidden flex flex-col md:flex-row fade-in">
+
+        <!-- Input Section -->
+        <div class="w-full md:w-1/2 p-6 md:p-10 border-b md:border-b-0 md:border-r border-white/40">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Tính Lương (Gross to Net)</h1>
+            <p class="text-gray-500 mb-8">Tính toán lương thực nhận dựa trên quy định mới nhất</p>
+
+            <form id="salary-form" class="space-y-6">
+                <!-- Thu nhập -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="grossSalary">Lương Gross (VNĐ)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-money-bill-wave text-gray-400"></i>
+                        </div>
+                        <input type="text" id="grossSalary" class="w-full pl-10 pr-4 py-3 rounded-xl input-glass text-lg font-semibold" placeholder="VD: 20,000,000" oninput="formatCurrencyInput(this); calculate()">
                     </div>
                 </div>
-                <div class="grid-item" id="card-2">
-                    <div class="card" id="card-2" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+
+                <!-- Người phụ thuộc -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="dependents">Số người phụ thuộc</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-users text-gray-400"></i>
+                        </div>
+                        <input type="number" id="dependents" min="0" value="0" class="w-full pl-10 pr-4 py-3 rounded-xl input-glass text-lg" oninput="calculate()">
                     </div>
                 </div>
-                <div class="grid-item" id="card-3">
-                    <div class="card" id="card-3" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
+
+                <!-- Vùng -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="region">Vùng mức lương tối thiểu</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-map-location-dot text-gray-400"></i>
+                        </div>
+                        <select id="region" class="w-full pl-10 pr-4 py-3 rounded-xl input-glass text-lg appearance-none cursor-pointer" onchange="calculate()">
+                            <option value="1">Vùng I (4,960,000 VNĐ)</option>
+                            <option value="2">Vùng II (4,410,000 VNĐ)</option>
+                            <option value="3">Vùng III (3,860,000 VNĐ)</option>
+                            <option value="4">Vùng IV (3,450,000 VNĐ)</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-gray-400 text-sm"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="grid-item" id="card-4">
-                    <div class="card" id="card-4" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+            </form>
+        </div>
+
+        <!-- Result Section -->
+        <div class="w-full md:w-1/2 p-6 md:p-10 bg-white/30 backdrop-blur-md">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fa-solid fa-chart-pie mr-2 text-primary"></i> Chi tiết lương
+            </h2>
+
+            <div class="space-y-4">
+                <!-- Result items -->
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600 font-medium">Lương Gross</span>
+                    <span id="res-gross" class="font-bold text-gray-800 text-lg">0 đ</span>
                 </div>
-                <div class="grid-item" id="card-5">
-                    <div class="card" id="card-5" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600">
+                        Bảo hiểm xã hội (8%)
+                        <i class="fa-solid fa-circle-info text-gray-400 text-xs ml-1 cursor-pointer" title="Tính trên lương tối đa 46.800.000đ"></i>
+                    </span>
+                    <span id="res-bhxh" class="font-semibold text-red-500">- 0 đ</span>
                 </div>
-                <div class="grid-item" id="card-6">
-                    <div class="card" id="card-6" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600">Bảo hiểm y tế (1.5%)</span>
+                    <span id="res-bhyt" class="font-semibold text-red-500">- 0 đ</span>
                 </div>
-                <div class="grid-item" id="card-7">
-                    <div class="card" id="card-7" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600">Bảo hiểm thất nghiệp (1%)</span>
+                    <span id="res-bhtn" class="font-semibold text-red-500">- 0 đ</span>
                 </div>
-                <div class="grid-item" id="card-8">
-                    <div class="card" id="card-8" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600 font-medium">Thu nhập trước thuế</span>
+                    <span id="res-before-tax" class="font-semibold text-gray-800">0 đ</span>
                 </div>
-                <div class="grid-item" id="card-9">
-                    <div class="card" id="card-9" onclick="selectCard(this)">
-                        <i class="fas fa-pikachu text-3xl text-blue-500"></i>
-                    </div>
+
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600">Giảm trừ gia cảnh (Bản thân)</span>
+                    <span class="font-semibold text-green-600">- 11,000,000 đ</span>
+                </div>
+
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600">Giảm trừ người phụ thuộc</span>
+                    <span id="res-dependents" class="font-semibold text-green-600">- 0 đ</span>
+                </div>
+
+                <div class="flex justify-between items-center py-2 border-b border-gray-200/50">
+                    <span class="text-gray-600">Thuế thu nhập cá nhân (TNCN)</span>
+                    <span id="res-pit" class="font-semibold text-red-500">- 0 đ</span>
+                </div>
+            </div>
+
+            <!-- NET SALARY -->
+            <div class="mt-8 bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 text-white shadow-lg transform transition-transform hover:scale-[1.02]">
+                <p class="text-sm text-indigo-100 font-medium mb-1 uppercase tracking-wider">Lương thực nhận (Net)</p>
+                <div class="flex items-end justify-between">
+                    <span id="res-net" class="text-3xl md:text-4xl font-bold">0 đ</span>
                 </div>
             </div>
         </div>
-    </div>
-    <script>
-        let selectedCards = [];
-        let score = 0;
 
-        function selectCard(card) {
-            if (card.classList.contains('active')) {
+    </div>
+
+    <script>
+        // Constants for 2024 (từ 01/07/2024)
+        const BASE_SALARY = 2340000;
+        const MAX_INSURANCE_BASE_BHXH_BHYT = BASE_SALARY * 20; // 46,800,000
+
+        const REGION_MIN_SALARY = {
+            1: 4960000,
+            2: 4410000,
+            3: 3860000,
+            4: 3450000
+        };
+
+        const PERSONAL_DEDUCTION = 11000000;
+        const DEPENDENT_DEDUCTION = 4400000;
+
+        const TAX_BRACKETS = [
+            { limit: 5000000, rate: 0.05, subtract: 0 },
+            { limit: 10000000, rate: 0.10, subtract: 250000 },
+            { limit: 18000000, rate: 0.15, subtract: 750000 },
+            { limit: 32000000, rate: 0.20, subtract: 1650000 },
+            { limit: 52000000, rate: 0.25, subtract: 3250000 },
+            { limit: 80000000, rate: 0.30, subtract: 5850000 },
+            { limit: Infinity, rate: 0.35, subtract: 9850000 }
+        ];
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('vi-VN').format(Math.round(num));
+        }
+
+        function parseCurrency(val) {
+            return parseFloat(val.replace(/[^\d]/g, '')) || 0;
+        }
+
+        function formatCurrencyInput(input) {
+            let val = parseCurrency(input.value);
+            if (val === 0) {
+                input.value = '';
                 return;
             }
-            card.classList.add('active');
-            selectedCards.push(card);
-            if (selectedCards.length === 2) {
-                setTimeout(() => {
-                    let card1 = selectedCards[0];
-                    let card2 = selectedCards[1];
-                    if (card1.id === card2.id) {
-                        card1.style.display = 'none';
-                        card2.style.display = 'none';
-                        score++;
-                        selectedCards = [];
-                    } else {
-                        card1.classList.remove('active');
-                        card2.classList.remove('active');
-                        selectedCards = [];
-                    }
-                }, 1000);
-            }
+            input.value = formatNumber(val);
         }
 
-        function checkWin() {
-            let cards = document.querySelectorAll('.card');
-            if (cards.length === 0) {
-                alert('Thắng!');
-                document.querySelector('.confetti').style.display = 'block';
-                setTimeout(() => {
-                    document.querySelector('.confetti').style.display = 'none';
-                }, 3000);
+        function getTax(taxableIncome) {
+            if (taxableIncome <= 0) return 0;
+            for (let bracket of TAX_BRACKETS) {
+                if (taxableIncome <= bracket.limit) {
+                    return taxableIncome * bracket.rate - bracket.subtract;
+                }
             }
+            return 0;
         }
 
-        setInterval(() => {
-            checkWin();
-        }, 100);
+        function calculate() {
+            let grossInput = document.getElementById('grossSalary').value;
+            let gross = parseCurrency(grossInput);
+            let deps = parseInt(document.getElementById('dependents').value) || 0;
+            let region = parseInt(document.getElementById('region').value) || 1;
 
-        document.querySelector('.confetti').style.backgroundImage = 'linear-gradient(to bottom, #f7f7f7, #f7f7f7)';
-        document.querySelector('.confetti').style.backgroundSize = '100% 100px';
-        document.querySelector('.confetti').style.backgroundRepeat = 'no-repeat';
-        document.querySelector('.confetti').style.backgroundPosition = '0% 0%';
-        document.querySelector('.confetti').style.transition = 'background-position 10s linear';
-        setInterval(() => {
-            let angle = Math.random() * Math.PI * 2;
-            let x = Math.random() * 100;
-            let y = Math.random() * 100;
-            let particle = document.createElement('div');
-            particle.style.position = 'absolute';
-            particle.style.top = `${y}%`;
-            particle.style.left = `${x}%`;
-            particle.style.background = `linear-gradient(to bottom, #f7f7f7, #f7f7f7)`;
-            particle.style.backgroundSize = '100% 100px';
-            particle.style.backgroundRepeat = 'no-repeat';
-            particle.style.backgroundPosition = '0% 0%';
-            particle.style.width = '10px';
-            particle.style.height = '10px';
-            particle.style.borderRadius = '50%';
-            particle.style.transition = 'top 2s linear, left 2s linear';
-            particle.style.transform = `rotate(${angle}rad)`;
-            document.querySelector('.confetti').appendChild(particle);
-            setTimeout(() => {
-                particle.style.display = 'none';
-            }, 2000);
-        }, 100);
+            if (gross <= 0) {
+                resetResults();
+                return;
+            }
+
+            // Calculate max base for BHTN based on region
+            let maxBhtnBase = REGION_MIN_SALARY[region] * 20;
+
+            // Bases
+            let baseBhxhBhyt = Math.min(gross, MAX_INSURANCE_BASE_BHXH_BHYT);
+            let baseBhtn = Math.min(gross, maxBhtnBase);
+
+            // Insurances
+            let bhxh = baseBhxhBhyt * 0.08;
+            let bhyt = baseBhxhBhyt * 0.015;
+            let bhtn = baseBhtn * 0.01;
+            let totalInsurance = bhxh + bhyt + bhtn;
+
+            // Deductions
+            let dependentDeductionTotal = deps * DEPENDENT_DEDUCTION;
+
+            // Taxable Income
+            let incomeBeforeTax = gross - totalInsurance;
+            let taxableIncome = incomeBeforeTax - PERSONAL_DEDUCTION - dependentDeductionTotal;
+
+            // PIT
+            let pit = getTax(taxableIncome);
+
+            // Net
+            let net = incomeBeforeTax - pit;
+
+            // Update UI
+            document.getElementById('res-gross').innerText = formatNumber(gross) + ' đ';
+            document.getElementById('res-bhxh').innerText = '- ' + formatNumber(bhxh) + ' đ';
+            document.getElementById('res-bhyt').innerText = '- ' + formatNumber(bhyt) + ' đ';
+            document.getElementById('res-bhtn').innerText = '- ' + formatNumber(bhtn) + ' đ';
+
+            document.getElementById('res-before-tax').innerText = formatNumber(incomeBeforeTax) + ' đ';
+            document.getElementById('res-dependents').innerText = '- ' + formatNumber(dependentDeductionTotal) + ' đ';
+            document.getElementById('res-pit').innerText = '- ' + formatNumber(pit) + ' đ';
+
+            // Animation for Net Salary update
+            let netEl = document.getElementById('res-net');
+            netEl.style.transform = 'scale(1.1)';
+            setTimeout(() => { netEl.style.transform = 'scale(1)'; }, 150);
+            netEl.innerText = formatNumber(net) + ' đ';
+        }
+
+        function resetResults() {
+            document.getElementById('res-gross').innerText = '0 đ';
+            document.getElementById('res-bhxh').innerText = '- 0 đ';
+            document.getElementById('res-bhyt').innerText = '- 0 đ';
+            document.getElementById('res-bhtn').innerText = '- 0 đ';
+            document.getElementById('res-before-tax').innerText = '0 đ';
+            document.getElementById('res-dependents').innerText = '- 0 đ';
+            document.getElementById('res-pit').innerText = '- 0 đ';
+            document.getElementById('res-net').innerText = '0 đ';
+        }
+
+        // Touch defaults
+        document.addEventListener('touchmove', function (event) {
+            if (event.scale !== 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
     </script>
 </body>
 </html>
